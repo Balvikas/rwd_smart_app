@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Bal Vikas Student Kiosk</title>
+    <style>
+        /* CSS RESET & VARIABLES */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        :root {
+            --primary: #f59e0b; /* Saffron gold accent theme */
+            --primary-dark: #b45309;
+            --bg: #f8fafc;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        body { 
+            background-color: var(--bg); 
+            min-height: 100vh;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text-main);
+            padding-top: 60px; /* Shift code layout down to accommodate top fixed menu bar layer */
+        }
+
+        /* FIXED MODERN TOP NAVIGATION BAR */
+        .top-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        }
+        .nav-logo {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: #ea580c;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .nav-menu-item {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.95rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .nav-menu-item:hover {
+            color: #ea580c;
+            border-color: #ea580c;
+            background-color: #fff7ed;
+        }
+
+        /* RESPONSIVE SPLIT SCREEN LAYOUT */
+        .kiosk-wrapper {
+            min-height: calc(100vh - 60px); /* Height offset subtraction math layout rules */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Left Branding Panel: Premium Saffron/Orange Kiosk Theme */
+        .hero-side {
+            background: linear-gradient(135deg, #ea580c 0%, #9a3412 100%);
+            color: white;
+            padding: 3rem 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        /* Premium Circular Photo Ring Frame for Swami Image */
+        .swami-frame {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .swami-photo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 4px solid white;
+            background-color: #eaeaea;
+        }
+
+        .hero-side h1 {
+            font-size: 2.4rem;
+            font-weight: 800;
+            margin-bottom: 0.2rem;
+            letter-spacing: -0.02em;
+        }
+        .hero-side h2 {
+            font-size: 1.5rem;
+            font-weight: 500;
+            opacity: 0.9;
+            margin-bottom: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .hero-side p {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            max-width: 340px;
+            line-height: 1.5;
+        }
+
+        /* Right Form Panel */
+        .form-side {
+            background: white;
+            padding: 2.5rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+        }
+        .form-container {
+            width: 100%;
+            max-width: 540px;
+        }
+        .mobile-title {
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+        }
+
+        /* CLEAN KIOSK FIELD STYLING */
+        .field-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .control-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .input-kiosk {
+            width: 100%;
+            padding: 1.1rem 1.2rem;
+            font-size: 1.15rem;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            background-color: var(--bg);
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.2s ease;
+            appearance: none;
+        }
+        select.input-kiosk {
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1.2rem center;
+            background-size: 1.2rem;
+            padding-right: 3rem;
+        }
+        .input-kiosk:focus {
+            border-color: #ea580c;
+            background-color: white;
+            box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.1);
+        }
+        .input-kiosk[readonly] {
+            cursor: not-allowed;
+            opacity: 0.75;
+        }
+
+        /* LARGE TOUCH BUTTONS */
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .btn-kiosk {
+            padding: 1.3rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-radius: 14px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: transform 0.1s ease, filter 0.2s ease;
+        }
+        .btn-kiosk:active {
+            transform: scale(0.97);
+        }
+        .btn-checkin {
+            background-color: var(--success);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.2);
+        }
+        .btn-checkout {
+            background-color: var(--danger);
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.2);
+        }
+        .btn-kiosk:hover {
+            filter: brightness(0.95);
+        }
+
+        /* STATUS ALERTS */
+        .status-alert {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 700;
+            display: none;
+        }
+        .alert-warning { background-color: #fef3c7; color: #92400e; }
+        .alert-success { background-color: #d1fae5; color: #065f46; }
+        .alert-danger { background-color: #fee2e2; color: #991b1b; }
+
+        /* VALIDATION ERROR INDICATOR */
+        .invalid-pulse {
+            border-color: var(--danger) !important;
+            animation: shake 0.3s ease;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        /* MEDIA QUERIES FOR RWD BREAKPOINTS */
+        @media (min-width: 576px) {
+            .form-side { padding: 3rem; }
+            .form-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (min-width: 992px) {
+            .kiosk-wrapper { flex-direction: row; }
+            .hero-side { width: 38%; min-height: calc(100vh - 60px); padding: 4rem; }
+            .form-side { width: 62%; min-height: calc(100vh - 60px); }
+            .mobile-title { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- TOP HEADER BAR BLOCK SETUP WITH GOOGLE-STYLE OUTLINE SIGN-UP ICON -->
+<div class="top-navbar">
+    <div class="nav-logo">🌸 Bal Vikas Attendance System</div>
+    <a href="signup.html" class="nav-menu-item">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        Sign Up
+    </a>
+</div>
+
+<div class="kiosk-wrapper">
+    <!-- Branding Display Panel -->
+    <div class="hero-side">
+        <div class="swami-frame">
+            <img src="Swami.jpg" alt="Sathya Sai Baba" class="swami-photo">
+        </div>
+        <h1>Smart Bal Vikas</h1>
+        <h2>Student Kiosk</h2>
+        <p>Please select your name to complete your quick attendance check-in or check-out.</p>
+    </div>
+    <!-- Attendance Form Panel -->
+    <div class="form-side">
+        <div class="form-container">
+            <h2 class="mobile-title">Attendance Kiosk</h2>
+            
+            <form id="kioskForm" onsubmit="return false;">
+
+
+                
+                <div class="field-group">
+                    <label for="studentDropdown" class="control-label">Student Name</label>
+<!-- FIXED: Added autocomplete="off" attribute right inside your select tag wrapper -->
+    <select id="studentDropdown" class="input-kiosk" autocomplete="off" onchange="autofillStudentData()">
+                          <option value="">-- Tap to Choose Student --</option>
+                        <option value="Sraavi Bojedla">Sraavi Bojedla</option>
+		<option value="Aarka Sai Arikapudi">Aarka Sai Arikapudi</option>
+<option value="Nirvan Nallamothu">Nirvan Nallamothu</option>
+<option value="Vaishnavi Batchu">Vaishnavi Batchu</option>
+<option value="Vedansh Gopalapuram">Vedansh Gopalapuram</option>
+<option value="Aadya Kasturi">Aadya Kasturi</option>
+<option value="Chetan Pokala">Chetan Pokala</option>
+<option value="Daksh Singarapu">Daksh Singarapu</option>
+<option value="Meghansh">Meghansh</option>
+<option value="Pardhu keyansh">Pardhu keyansh</option>
+<option value="Aadhya Gade">Aadhya Gade</option>
+<option value="Aarohi Koppurapu">Aarohi Koppurapu</option>
+<option value="Anvika Krishna Vakamullu">Anvika Krishna Vakamullu</option>
+<option value="Ashwitha Busam">Ashwitha Busam</option>
+<option value="Saanvi Bojedla">Saanvi Bojedla</option>
+<option value="Shrivani Metta">Shrivani Metta</option>
+<option value="Srihith kota">Srihith kota</option>
+<option value="Nihitha">Nihitha</option>
+<option value="Shloka Duggirala">Shloka Duggirala</option>
+<option value="Shreya Reddy">Shreya Reddy</option>
+<option value="Yashwa Nirvan Kudikala">Yashwa Nirvan Kudikala</option>
+<option value="Advaith Gopalapuram">Advaith Gopalapuram</option>
+<option value="Aleksandr Arbuzov">Aleksandr Arbuzov</option>
+<option value="Drithsri">Drithsri</option>
+<option value="Hanika yakkali">Hanika yakkali</option>
+<option value="Hansini Batchu">Hansini Batchu</option>
+<option value="Lohith Pokala">Lohith Pokala</option>
+<option value="Mallika Killamshetty">Mallika Killamshetty</option>
+<option value="Sreeyan Immadisetty">Sreeyan Immadisetty</option>
+						<option value="Varshish">Varshish</option>
+<option value="Akshara Reddy Patel">Akshara Reddy Patel</option>
+<option value="Avatar Peddi">Avatar Peddi</option>
+<option value="Hansi Atmakur">Hansi Atmakur</option>
+<option value="Hansika Nallamalli">Hansika Nallamalli</option>
+<option value="Sai shraddha vivek">Sai shraddha vivek</option>
+<option value="Tanvi Gade">Tanvi Gade</option>
+<option value="Aadhya Malli Patel">Aadhya Malli Patel</option>
+<option value="Arjun Marepalli">Arjun Marepalli</option>
+<option value="Deekshika Nimmala">Deekshika Nimmala</option>
+<option value="KARTHIKEYA VALE">KARTHIKEYA VALE</option>
+<option value="Mukunda kolapalli">Mukunda kolapalli</option>
+<option value="Murari kolapalli">Murari kolapalli</option>
+<option value="Nihant Chigurupati">Nihant Chigurupati</option>
+<option value="Nirvan yakkali">Nirvan yakkali</option>
+<option value="Thaswika M">Thaswika M</option>
+<option value="Aadya Akula">Aadya Akula</option>
+<option value="Aarya Sri Jandhyala">Aarya Sri Jandhyala</option>
+<option value="Advaita Koppurapu">Advaita Koppurapu</option>
+<option value="Nainika Kudikala">Nainika Kudikala</option>
+<option value="Anandita Kavalipati">Anandita Kavalipati</option>
+<option value="Ananya Kulkarni">Ananya Kulkarni</option>
+<option value="Jaivanth Balasai">Jaivanth Balasai</option>
+<option value="Jayanth Balasai">Jayanth Balasai</option>
+<option value="Jayasasank sai Vakamullu">Jayasasank sai Vakamullu</option>
+<option value="Koushik Vadlamuri">Koushik Vadlamuri</option>
+<option value="Neha Tadiparthi">Neha Tadiparthi</option>
+<option value="Shivani Pappu">Shivani Pappu</option>
+<option value="Sri Sai Shashank Veluri">Sri Sai Shashank Veluri</option>
+<option value="Aishwarya Anand">Aishwarya Anand</option>
+<option value="Akshara Marepalli">Akshara Marepalli</option>
+<option value="Preran M">Preran M</option>
+<option value="Shreyas">Shreyas</option>
+<option value="Ashrith Kasturi">Ashwitha Busam</option> <!-- Note: Maps to Ashrith Kasturi key -->
+<option value="Janani Kulkarni">Janani Kulkarni</option>
+<option value="Shaehan Tadiparthi">Shaehan Tadiparthi</option>
+<option value="Sri Sai Vihas Veluri">Sri Sai Vihas Veluri</option>
+<option value="Srilekha Sreedhar">Srilekha Sreedhar</option>
+<option value="Saaketh Damaraju">Saaketh Damaraju</option>
+<option value="Sri Sai Yeshwant Chigurupati">Sri Sai Yeshwant Chigurupati</option>
+<option value="Srikrishna Saannidhya Vadlamudi">Srikrishna Saannidhya Vadlamudi</option>
+<option value="Srisai Niharika Thatiparthi">Srisai Niharika Thatiparthi</option>
+<option value="ANIRUDDHA SATYA KATTA">ANIRUDDHA SATYA KATTA</option>
+<option value="Harish Anand">Harish Anand</option>
+<option value="Niharika Nallamalli">Niharika Nallamalli</option>
+<option value="Sankalp Immadisetty">Sankalp Immadisetty</option>
+                    <option value="Satyank Sai Kanugula">Satyank Sai Kanugula</option>
+
+                    </select>
+                </div>
+
+                <div class="form-grid">
+                    <div class="field-group">
+                        <label for="group" class="control-label">Grade / Group</label>
+                        <input type="text" id="group" class="input-kiosk" placeholder="--" readonly>
+                    </div>
+                    <div class="field-group">
+                        <label for="parentName" class="control-label">Parent / Guardian</label>
+                        <input type="text" id="parentName" class="input-kiosk" placeholder="--" readonly>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label for="parentPhone" class="control-label">Parent Phone Number</label>
+                    <input type="text" id="parentPhone" class="input-kiosk" placeholder="--" readonly>
+                </div>
+                
+                <div class="btn-grid">
+                    <button type="button" class="btn-kiosk btn-checkin" onclick="handleSubmit('Check-in')">
+                        <span>🟢</span> Check In
+                    </button>
+                    <button type="button" class="btn-kiosk btn-checkout" onclick="handleSubmit('Check-out')">
+                        <span>🔴</span> Check Out
+                    </button>
+                </div>
+<!-- UPDATED: Open Absentee Report in Another Page -->
+<div style="margin-top: 1rem;">
+    <button type="button" class="btn-kiosk" style="background-color: #4f46e5; width: 100%; box-shadow: 0 6px 16px rgba(79, 70, 229, 0.2);" onclick="openAbsenteePage()">
+        <span>📋</span> Absentee Report
+    </button>
+</div>
+
+<!-- NEW: Direct Relative Link Navigation to your signup.html Page -->
+<div style="margin-top: 1rem;">
+    <a href="signup.html" class="btn-kiosk" style="background-color: #64748b; width: 100%; box-shadow: 0 6px 16px rgba(100, 116, 139, 0.2); text-decoration: none; display: flex; align-items: center; justify-content: center;">
+        <span>📝</span> Student Sign-Up / Management
+    </a>
+</div>
+				
+                <div id="statusAlert" class="status-alert"></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Main Student Lookup Configuration Map
+const studentDatabase = {
+   "Sraavi Bojedla": { group: "Pre-School", parent: "srinavya kethineni", phone: "9162917955" },
+    "Aarka Sai Arikapudi": { group: "Pre-School", parent: "Amrutha Chalasani", phone: "9803095221" },
+    "Nirvan Nallamothu": { group: "Pre-School", parent: "Prudhvi Nallamothu", phone: "7039392698" },
+    "Vaishnavi Batchu": { group: "Pre-School", parent: "Sindhura Batchu", phone: "5104565644" },
+    "Vedansh Gopalapuram": { group: "Pre-School", parent: "Ramya Ganjapu", phone: "9168325700" },
+    "Aadya Kasturi": { group: "Group 1", parent: "Vijay Kasturi", phone: "6035711020" },
+    "Chetan Pokala": { group: "Group 1", parent: "Madhu Pokala", phone: "9164651365" },
+    "Daksh Singarapu": { group: "Group 1", parent: "Harika Singarapu", phone: "5713525015" },
+    "Meghansh": { group: "Group 1", parent: "Keerthi", phone: "9169531113" },
+    "Pardhu keyansh": { group: "Group 1", parent: "Navyasree", phone: "4802950827" },
+    "Aadhya Gade": { group: "Group 2", parent: "Vinod Gade", phone: "9168800567" },
+    "Aarohi Koppurapu": { group: "Group 2", parent: "Raju Koppurapu", phone: "9168406564" },
+    "Anvika Krishna Vakamullu": { group: "Group 2", parent: "Chiraneevi Vakamullu", phone: "5108614474" },
+    "Ashwitha Busam": { group: "Group 2", parent: "Ram Busam", phone: "2145978346" },
+    "Saanvi Bojedla": { group: "Group 2", parent: "srinavya kethineni", phone: "9162917955" },
+    "Shrivani Metta": { group: "Group 2", parent: "Harini Peddi", phone: "2797326021" },
+    "Srihith kota": { group: "Group 2", parent: "Swarajyalaxmi Bakkagari", phone: "3306874876" },
+    "Nihitha": { group: "Group 3", parent: "Anusha grandhi", phone: "2792354872" },
+    "Shloka Duggirala": { group: "Group 3", parent: "Surender Duggirala", phone: "9169326596" },
+    "Shreya Reddy": { group: "Group 3", parent: "Aruna Reddy", phone: "9168064208" },
+    "Yashwa Nirvan Kudikala": { group: "Group 3", parent: "Balakrishna Kudikala", phone: "9167384226" },
+    "Advaith Gopalapuram": { group: "Group 4", parent: "Ramya Ganjapu", phone: "9168325700" },
+    "Aleksandr Arbuzov": { group: "Group 4", parent: "Elena Saxena", phone: "9168823748" },
+    "Drithsri": { group: "Group 4", parent: "Harika Singarapu", phone: "5713525015" },
+    "Hanika yakkali": { group: "Group 4", parent: "Deepthi Bandaru", phone: "9169369419" },
+    "Hansini Batchu": { group: "Group 4", parent: "Sindhura Batchu", phone: "5104565644" },
+    "Lohith Pokala": { group: "Group 4", parent: "Madhu Pokala", phone: "9164651365" },
+    "Mallika Killamshetty": { group: "Group 4", parent: "Mallika Killamshetty", phone: "9163671357" },
+    "Sreeyan Immadisetty": { group: "Group 4", parent: "Leela Immadisetty", phone: "4088164612" },
+    "Varshish": { group: "Group 4", parent: "Keerthi", phone: "9169531113" },
+    "Akshara Reddy Patel": { group: "Group 4", parent: "Ramya Reddy Patel", phone: "4086652849" },
+    "Avatar Peddi": { group: "Group 4", parent: "Harini Peddi", phone: "2797326021" },
+    "Hansi Atmakur": { group: "Group 4", parent: "Srini Atmakur", phone: "9163355594" },
+    "Hansika Nallamalli": { group: "Group 4", parent: "Kalyan Nallamalli", phone: "9165059230" },
+    "Sai shraddha vivek": { group: "Group 4", parent: "Lavanya sivaramakrishnan", phone: "969349613" },
+    "Tanvi Gade": { group: "Group 4", parent: "Vinod Gade", phone: "9168800567" },
+    "Aadhya Malli Patel": { group: "Group 4", parent: "Sravanti Bojireddygari", phone: "9165415422" },
+    "Arjun Marepalli": { group: "Group 4", parent: "Swathi Polampalli", phone: "9166275400" },
+    "Deekshika Nimmala": { group: "Group 4", parent: "Balaji", phone: "8043932865" },
+    "KARTHIKEYA VALE": { group: "Group 4", parent: "NAGAMALLESWARA RAO V", phone: "4802418212" },
+    "Mukunda kolapalli": { group: "Group 4", parent: "Sireesha Potharaju", phone: "7862186076" },
+    "Murari kolapalli": { group: "Group 4", parent: "Sireesha Potharaju", phone: "7862186076" },
+    "Nihant Chigurupati": { group: "Group 4", parent: "Shanti Padmaja Koripella", phone: "6785338199" },
+    "Nirvan yakkali": { group: "Group 4", parent: "Anusha grandhi", phone: "2792354872" },
+    "Thaswika M": { group: "Group 4", parent: "Prashanthi M", phone: "5109442062" },
+    "Aadya Akula": { group: "Group 4", parent: "Ashwini Akula", phone: "9167434902" },
+    "Aarya Sri Jandhyala": { group: "Group 4", parent: "Mallika Sashi Allu", phone: "8583610831" },
+    "Advaita Koppurapu": { group: "Group 4", parent: "Raju Koppurapu", phone: "9168406564" },
+    "Nainika Kudikala": { group: "Group 4", parent: "Balakrishna Kudikala", phone: "9167384226" },
+    "Anandita Kavalipati": { group: "Group 4", parent: "Shamala Pulugurtha", phone: "9164124802" },
+    "Ananya Kulkarni": { group: "Group 4", parent: "Rucheeta Kulkarni", phone: "8583448310" },
+    "Jaivanth Balasai": { group: "Group 4", parent: "Balasai Prasanth", phone: "9188142120" },
+    "Jayanth Balasai": { group: "Group 4", parent: "Shobana Balasai", phone: "9188142120" },
+    "Jayasasank sai Vakamullu": { group: "Group 4", parent: "Chiraneevi Vakamullu", phone: "5108614474" },
+    "Koushik Vadlamuri": { group: "Group 4", parent: "Neelima madabhushi", phone: "2243479892" },
+    "Neha Tadiparthi": { group: "Group 4", parent: "Hima Bindu Kallam", phone: "5134179019" },
+    "Shivani Pappu": { group: "Group 4", parent: "Sarvalakshmi Pappu", phone: "4084210204" },
+    "Sri Sai Shashank Veluri": { group: "Group 4", parent: "Sreedhar Veluri", phone: "9164670698" },
+    "Aishwarya Anand": { group: "Group 4", parent: "Radhika Anand", phone: "9169369577" },
+    "Akshara Marepalli": { group: "Group 4", parent: "Swathi Polampalli", phone: "9166275400" },
+    "Preran M": { group: "Group 4", parent: "Prasanthi M", phone: "5109442062" },
+    "Shreyas": { group: "Group 4", parent: "Keerthi", phone: "9169531113" },
+    "Ashrith Kasturi": { group: "Group 4", parent: "Vijay Kasturi", phone: "6035711020" },
+    "Janani Kulkarni": { group: "Group 4", parent: "Rucheeta Kulkarni", phone: "8583448310" },
+    "Shaehan Tadiparthi": { group: "Group 4", parent: "Hima Bindu", phone: "5134179019" },
+    "Sri Sai Vihas Veluri": { group: "Group 4", parent: "Sreedhar Veluri", phone: "9164670698" },
+    "Srilekha Sreedhar": { group: "Group 4", parent: "Sreedhar Gopalakrishnan", phone: "4083387096" },
+    "Saaketh Damaraju": { group: "Group 4", parent: "Satish Damaraju", phone: "9175021470" },
+    "Sri Sai Yeshwant Chigurupati": { group: "Group 4", parent: "Shanti Padmaja Koripella", phone: "6785338199" },
+    "Srikrishna Saannidhya Vadlamudi": { group: "Group 4", parent: "Neelima madabhushi", phone: "2243479892" },
+    "Srisai Niharika Thatiparthi": { group: "Group 4", parent: "Nutan Thatiparthi", phone: "9162578963" },
+    "ANIRUDDHA SATYA KATTA": { group: "Group 4", parent: "Kiranmayi Katta", phone: "5106466956" },
+    "Harish Anand": { group: "Group 4", parent: "Radhika Anand", phone: "9169369577" },
+    "Niharika Nallamalli": { group: "Group 4", parent: "Kayan Nallamalli", phone: "9165059230" },
+    "Sankalp Immadisetty": { group: "Group 4", parent: "Leela Immadisetty", phone: "4088164612" },
+    "Satyank Sai Kanugula": { group: "Group 4", parent: "Ramesh Kanugula", phone: "5104498571" }
+};
+
+// Normalize data mapping once for instant runtime lookup matches
+const normalizedDatabase = {};
+for (let key in studentDatabase) {
+    normalizedDatabase[key.toLowerCase().trim()] = studentDatabase[key];
+}
+
+function autofillStudentData() {
+    const dropdown = document.getElementById("studentDropdown");
+    const selectedValue = dropdown.value.trim().toLowerCase();
+    
+    dropdown.classList.remove("invalid-pulse");
+    const matchedRecord = normalizedDatabase[selectedValue];
+    
+    if (matchedRecord) {
+        document.getElementById("group").value = matchedRecord.group;
+        document.getElementById("parentName").value = matchedRecord.parent;
+        document.getElementById("parentPhone").value = matchedRecord.phone;
+    } else {
+        document.getElementById("group").value = "";
+        document.getElementById("parentName").value = "";
+        document.getElementById("parentPhone").value = "";
+    }
+}
+
+// Global App Link Configuration Variable Settings
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyj1GA4U9OEjlvKX1Mv7QfJbknIRLhXQiCq_iQwk33SXkB1USjbJrd2bHFkdJmnPPqN/exec";
+
+function openAbsenteePage() {
+    const alertBox = document.getElementById("statusAlert");
+
+    // FIXED: Correct check placeholder logic criteria rule evaluation
+    if (GOOGLE_SCRIPT_URL === "YOUR_DEPLOYED_WEB_APP_URL_HERE" || GOOGLE_SCRIPT_URL === "") {
+        alertBox.className = "status-alert alert-warning";
+        alertBox.style.display = "block";
+        alertBox.textContent = "⚠️ Please configure your live GOOGLE_SCRIPT_URL to view reports.";
+        return;
+    }
+
+    window.open(`${GOOGLE_SCRIPT_URL}?action=getAbsentees`, '_blank');
+}
+
+function handleSubmit(statusType) {
+    const dropdown = document.getElementById("studentDropdown");
+    const alertBox = document.getElementById("statusAlert");
+    
+    if (!dropdown.value) {
+        dropdown.classList.add("invalid-pulse");
+        dropdown.focus();
+        return;
+    }
+    
+    const selectedStudentName = dropdown.value;
+    alertBox.className = "status-alert alert-warning";
+    alertBox.style.display = "block";
+    alertBox.textContent = `⏳ Processing ${statusType}...`;
+
+    // FIXED: Changed payload properties from studentName to student to mirror Apps Script receiver variables
+    const payload = {
+        timestamp: new Date().toISOString(),
+        studentName: selectedStudentName,
+        group: document.getElementById("group").value,
+        parentName: document.getElementById("parentName").value,
+        parentPhone: document.getElementById("parentPhone").value,
+        status: statusType
+    };
+    
+    if (GOOGLE_SCRIPT_URL === "YOUR_DEPLOYED_WEB_APP_URL_HERE") {
+        console.log("Simulating submit (No API URL set):", payload);
+        setTimeout(() => {
+            alertBox.className = "status-alert alert-success";
+            alertBox.textContent = `🎉 Success (Simulated)! ${selectedStudentName} has been ${statusType}ed.`;
+            setTimeout(() => {
+                document.getElementById("kioskForm").reset();
+                alertBox.style.display = "none";
+            }, 3000);
+        }, 1000);
+    } else {
+        // FIXED: Set header content stream type filter parameter to text/plain to circumvent CORS payload locks
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            cache: "no-cache",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify(payload)
+        })
+        .then(() => {
+            alertBox.className = "status-alert alert-success";
+            alertBox.textContent = `🎉 Success! ${selectedStudentName} has been ${statusType}ed.`;
+            setTimeout(() => {
+                document.getElementById("kioskForm").reset();
+                alertBox.style.display = "none";
+            }, 3000);
+        })
+        .catch((error) => {
+            alertBox.className = "status-alert alert-danger";
+            alertBox.textContent = "❌ Connection error. Please try again.";
+            console.error("Submission failed:", error);
+        });
+    }
+}
+</script>
+</body>
+</html>
