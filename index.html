@@ -5,14 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Bal Vikas Student Kiosk</title>
     <style>
-        /* CSS RESET & VARIABLES */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
-            --primary: #f59e0b; /* Saffron gold accent theme */
+            --primary: #f59e0b;
             --primary-dark: #b45309;
             --bg: #f8fafc;
             --text-main: #1e293b;
@@ -20,303 +15,103 @@
             --border: #e2e8f0;
             --success: #10b981;
             --danger: #ef4444;
+            --warning: #f59e0b;
         }
-
         body { 
-            background-color: var(--bg); 
-            min-height: 100vh;
+            background-color: var(--bg); min-height: 100vh;
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            color: var(--text-main);
-            padding-top: 60px; /* Shift code layout down to accommodate top fixed menu bar layer */
+            color: var(--text-main); position: relative; font-size: 0.9rem; /* Compact Font Core */
         }
-
-        /* FIXED MODERN TOP NAVIGATION BAR */
-        .top-navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            background: white;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 1.5rem;
-            z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        .floating-signup-btn {
+            position: fixed; top: 1rem; right: 1rem; width: auto; height: 38px; padding: 0 1rem;
+            border-radius: 20px; background-color: white; border: 2px solid var(--border);
+            color: var(--text-muted); cursor: pointer; display: flex; align-items: center;
+            justify-content: center; font-weight: 700; font-size: 0.85rem; z-index: 1000;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); transition: all 0.2s ease;
         }
-        .nav-logo {
-            font-weight: 700;
-            font-size: 1.05rem;
-            color: #ea580c;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        .nav-menu-item {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 0.95rem;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            border: 2px solid var(--border);
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-        .nav-menu-item:hover {
-            color: #ea580c;
-            border-color: #ea580c;
-            background-color: #fff7ed;
-        }
-
-        /* RESPONSIVE SPLIT SCREEN LAYOUT */
-        .kiosk-wrapper {
-            min-height: calc(100vh - 60px); /* Height offset subtraction math layout rules */
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Left Branding Panel: Premium Saffron/Orange Kiosk Theme */
+        .floating-signup-btn:hover { color: #ea580c; border-color: #ea580c; background-color: #fff7ed; transform: scale(1.02); }
+        .kiosk-wrapper { min-height: 100vh; display: flex; flex-direction: column; }
         .hero-side {
-            background: linear-gradient(135deg, #ea580c 0%, #9a3412 100%);
-            color: white;
-            padding: 3rem 2rem;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
+            background: linear-gradient(135deg, #ea580c 0%, #9a3412 100%); color: white;
+            padding: 3rem 2rem 2rem 2rem; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center; position: relative;
         }
-        
-        /* Premium Circular Photo Ring Frame for Swami Image */
         .swami-frame {
-            width: 180px;
-            height: 180px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 8px;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: 140px; height: 140px; border-radius: 50%; background: rgba(255, 255, 255, 0.2);
+            padding: 6px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); margin-bottom: 1rem;
+            display: flex; align-items: center; justify-content: center;
         }
-        .swami-photo {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-            border: 4px solid white;
-            background-color: #eaeaea;
-        }
-
-        .hero-side h1 {
-            font-size: 2.4rem;
-            font-weight: 800;
-            margin-bottom: 0.2rem;
-            letter-spacing: -0.02em;
-        }
-        .hero-side h2 {
-            font-size: 1.5rem;
-            font-weight: 500;
-            opacity: 0.9;
-            margin-bottom: 1.2rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        .hero-side p {
-            font-size: 1.1rem;
-            opacity: 0.8;
-            max-width: 340px;
-            line-height: 1.5;
-        }
-
-        /* Right Form Panel */
-        .form-side {
-            background: white;
-            padding: 2.5rem 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-grow: 1;
-        }
-        .form-container {
-            width: 100%;
-            max-width: 540px;
-        }
-        .mobile-title {
-            text-align: center;
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 2rem;
-        }
-
-        /* CLEAN KIOSK FIELD STYLING */
-        .field-group {
-            margin-bottom: 1.5rem;
-        }
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-        .control-label {
-            display: block;
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        .input-kiosk {
-            width: 100%;
-            padding: 1.1rem 1.2rem;
-            font-size: 1.15rem;
-            border-radius: 12px;
-            border: 2px solid var(--border);
-            background-color: var(--bg);
-            color: var(--text-main);
-            outline: none;
-            transition: all 0.2s ease;
-            appearance: none;
-        }
-        select.input-kiosk {
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 1.2rem center;
-            background-size: 1.2rem;
-            padding-right: 3rem;
-        }
-        .input-kiosk:focus {
-            border-color: #ea580c;
-            background-color: white;
-            box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.1);
-        }
-        .input-kiosk[readonly] {
-            cursor: not-allowed;
-            opacity: 0.75;
-        }
-
-        /* LARGE TOUCH BUTTONS */
-        .btn-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-        .btn-kiosk {
-            padding: 1.3rem;
-            font-size: 1.2rem;
-            font-weight: 700;
-            border-radius: 14px;
-            border: none;
-            color: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            transition: transform 0.1s ease, filter 0.2s ease;
-        }
-        .btn-kiosk:active {
-            transform: scale(0.97);
-        }
-        .btn-checkin {
-            background-color: var(--success);
-            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.2);
-        }
-        .btn-checkout {
-            background-color: var(--danger);
-            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.2);
-        }
-        .btn-kiosk:hover {
-            filter: brightness(0.95);
-        }
-
-        /* STATUS ALERTS */
-        .status-alert {
-            margin-top: 1.5rem;
-            padding: 1rem;
-            border-radius: 12px;
-            text-align: center;
-            font-weight: 700;
-            display: none;
-        }
+        .swami-photo { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 3px solid white; }
+        .hero-side h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.2rem; letter-spacing: -0.02em; }
+        .hero-side h2 { font-size: 1.2rem; font-weight: 500; opacity: 0.9; margin-bottom: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .hero-side p { font-size: 0.95rem; opacity: 0.8; max-width: 320px; line-height: 1.4; }
+        .form-side { background: white; padding: 2rem 1.5rem; display: flex; align-items: center; justify-content: center; flex-grow: 1; }
+        .form-container { width: 100%; max-width: 480px; }
+        .mobile-title { text-align: center; font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; }
+        .field-group { margin-bottom: 1rem; }
+        .form-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem; }
+        .control-label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .input-kiosk { width: 100%; padding: 0.85rem 1rem; font-size: 0.95rem; border-radius: 10px; border: 2px solid var(--border); background-color: var(--bg); color: var(--text-main); outline: none; transition: all 0.2s ease; appearance: none; }
+        select.input-kiosk { background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://w3.org' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1rem; padding-right: 2.5rem; }
+        .input-kiosk:focus { border-color: #ea580c; background-color: white; box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.08); }
+        .input-kiosk[readonly] { cursor: not-allowed; opacity: 0.75; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1.5rem; }
+        .btn-kiosk { padding: 1rem; font-size: 1.05rem; font-weight: 700; border-radius: 12px; border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.4rem; transition: transform 0.1s ease, filter 0.2s ease; }
+        .btn-kiosk:active { transform: scale(0.98); }
+        .btn-checkin { background-color: var(--success); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15); }
+        .btn-checkout { background-color: var(--danger); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15); }
+        .status-alert { margin-top: 1rem; padding: 0.85rem; border-radius: 10px; text-align: center; font-weight: 700; font-size: 0.9rem; display: none; }
         .alert-warning { background-color: #fef3c7; color: #92400e; }
         .alert-success { background-color: #d1fae5; color: #065f46; }
         .alert-danger { background-color: #fee2e2; color: #991b1b; }
+        .alert-loading { background-color: #fef3c7; color: #92400e; }
+        .invalid-pulse { border-color: var(--danger) !important; animation: shake 0.3s ease; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(2px); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 1rem; }
+        .modal-card { background: white; width: 100%; max-width: 460px; border-radius: 16px; padding: 1.5rem; box-shadow: 0 15px 20px -5px rgba(0,0,0,0.1); position: relative; animation: slideUp 0.25s ease; }
+        @keyframes slideUp { from { transform: translateY(15px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 2px solid #fed7aa; padding-bottom: 0.5rem; }
+        .modal-header h3 { font-size: 1.25rem; color: #ea580c; font-weight: 800; }
+        .close-btn { background: #f1f5f9; border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-weight: bold; font-size: 1rem; color: var(--text-muted); display: flex; align-items: center; justify-content: center; }
+        .crud-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-top: 1.25rem; }
+        .btn-crud { padding: 0.75rem; font-size: 0.85rem; font-weight: 700; border-radius: 8px; border: none; color: white; cursor: pointer; }
+        .btn-insert { background-color: var(--success); }
+        .btn-update { background-color: var(--warning); }
+        .btn-delete { background-color: var(--danger); }
 
-        /* VALIDATION ERROR INDICATOR */
-        .invalid-pulse {
-            border-color: var(--danger) !important;
-            animation: shake 0.3s ease;
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-6px); }
-            75% { transform: translateX(6px); }
-        }
-
-        /* MEDIA QUERIES FOR RWD BREAKPOINTS */
-        @media (min-width: 576px) {
-            .form-side { padding: 3rem; }
-            .form-grid { grid-template-columns: 1fr 1fr; }
-        }
-        @media (min-width: 992px) {
-            .kiosk-wrapper { flex-direction: row; }
-            .hero-side { width: 38%; min-height: calc(100vh - 60px); padding: 4rem; }
-            .form-side { width: 62%; min-height: calc(100vh - 60px); }
-            .mobile-title { display: none; }
-        }
+        @media (min-width: 576px) { .form-side { padding: 2.5rem; } .form-grid { grid-template-columns: 1fr 1fr; } }
+        @media (min-width: 992px) { .kiosk-wrapper { flex-direction: row; } .hero-side { width: 35%; min-height: 100vh; padding: 2rem; } .form-side { width: 65%; min-height: 100vh; } .mobile-title { display: none; } }
     </style>
 </head>
+
 <body>
 
-<!-- TOP HEADER BAR BLOCK SETUP WITH GOOGLE-STYLE OUTLINE SIGN-UP ICON -->
-<div class="top-navbar">
-    <div class="nav-logo">🌸 Bal Vikas Attendance System</div>
-    <a href="signup.html" class="nav-menu-item">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-        </svg>
-        Sign Up
-    </a>
-</div>
+<button class="floating-signup-btn" onclick="toggleSignupModal(true)" aria-label="Sign Up Form">
+    <svg xmlns="http://w3.org" width="16" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: block; margin-right: 0.4rem;">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+    </svg>
+    Sign Up
+</button>
 
 <div class="kiosk-wrapper">
-    <!-- Branding Display Panel -->
     <div class="hero-side">
-        <div class="swami-frame">
-            <img src="Swami.jpg" alt="Sathya Sai Baba" class="swami-photo">
-        </div>
+        <div class="swami-frame"><img src="Swami.jpg" alt="Sathya Sai Baba" class="swami-photo"></div>
         <h1>Smart Bal Vikas</h1>
         <h2>Student Kiosk</h2>
         <p>Please select your name to complete your quick attendance check-in or check-out.</p>
     </div>
-    <!-- Attendance Form Panel -->
     <div class="form-side">
         <div class="form-container">
-            <h2 class="mobile-title">Attendance Kiosk</h2>
-            
+            <h2 class="mobile-title">Smart Bal Vikas Student Kiosk</h2>
             <form id="kioskForm" onsubmit="return false;">
-
-
-                
-                                <div class="field-group">
+                <div class="field-group">
                     <label for="studentDropdown" class="control-label">Student Name</label>
-                    <!-- Drops static list items. System populates values dynamically from Google Sheet on initialize boot hooks -->
                     <select id="studentDropdown" class="input-kiosk" autocomplete="off" onchange="autofillStudentData()">
                         <option value="">-- Synchronizing Live Student Roster... --</option>
                     </select>
                 </div>
-
                 <div class="form-grid">
                     <div class="field-group">
                         <label for="group" class="control-label">Grade / Group</label>
@@ -327,104 +122,93 @@
                         <input type="text" id="parentName" class="input-kiosk" placeholder="--" readonly>
                     </div>
                 </div>
-
                 <div class="field-group">
                     <label for="parentPhone" class="control-label">Parent Phone Number</label>
                     <input type="text" id="parentPhone" class="input-kiosk" placeholder="--" readonly>
                 </div>
-                
                 <div class="btn-grid">
-                    <button type="button" class="btn-kiosk btn-checkin" onclick="handleSubmit('Check-in')">
-                        <span>🟢</span> Check In
-                    </button>
-                    <button type="button" class="btn-kiosk btn-checkout" onclick="handleSubmit('Check-out')">
-                        <span>🔴</span> Check Out
-                    </button>
+                    <button type="button" class="btn-kiosk btn-checkin" onclick="handleSubmit('Check-in')"><span>🟢</span> Check In</button>
+                    <button type="button" class="btn-kiosk btn-checkout" onclick="handleSubmit('Check-out')"><span>🔴</span> Check Out</button>
                 </div>
-
-                <!-- Open Absentee Report in Another Page -->
-                <div style="margin-top: 1rem;">
-                    <button type="button" class="btn-kiosk" style="background-color: #4f46e5; width: 100%; box-shadow: 0 6px 16px rgba(79, 70, 229, 0.2);" onclick="openAbsenteePage()">
-                        <span>📋</span> Absentee Report
-                    </button>
+                <div style="margin-top: 0.75rem;">
+                    <button type="button" class="btn-kiosk" style="background-color: #4f46e5; width: 100%; font-size: 1.05rem; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);" onclick="openAbsenteePage()"><span>📋</span> Absentee Report</button>
                 </div>
-
-                <!-- Direct Relative Link Navigation to signup.html Page -->
-                <div style="margin-top: 1rem;">
-                    <a href="signup.html" class="btn-kiosk" style="background-color: #64748b; width: 100%; box-shadow: 0 6px 16px rgba(100, 116, 139, 0.2); text-decoration: none; display: flex; align-items: center; justify-content: center;">
-                        <span>📝</span> Student Sign-Up / Management
-                    </a>
-                </div>
-				
                 <div id="statusAlert" class="status-alert"></div>
             </form>
         </div>
     </div>
 </div>
 
-<script>
-// Main Deployed Google Apps Script Web App Endpoint URL Target
+<div id="signupModal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>StudentList</h3>
+            <button class="close-btn" onclick="toggleSignupModal(false)">✕</button>
+        </div>
+        <form id="signupForm" onsubmit="return false;">
+            <div class="field-group">
+                <label for="modalFullName" class="control-label">Student's Full Name</label>
+                <input type="text" id="modalFullName" class="input-kiosk" autocomplete="off" placeholder="Exact name for Update/Delete" required>
+            </div>
+            <div class="field-group" style="margin-bottom: 0.75rem;">
+                <label for="modalGrade" class="control-label">Grade / Group</label>
+                <input type="text" id="modalGrade" class="input-kiosk" autocomplete="off" placeholder="e.g. Group 4, Pre-School">
+            </div>
+            <div class="field-group" style="margin-bottom: 0.75rem;">
+                <label for="modalParent" class="control-label">Parent / Guardian Name</label>
+                <input type="text" id="modalParent" class="input-kiosk" autocomplete="off" placeholder="Enter parent full name">
+            </div>
+            <div class="field-group" style="margin-bottom: 0.75rem;">
+                <label for="modalPhone" class="control-label">Parent Phone Number</label>
+                <input type="text" id="modalPhone" class="input-kiosk" autocomplete="off" placeholder="Enter contact phone number">
+            </div>
+            <div class="crud-grid">
+                <button type="button" class="btn-crud btn-insert" onclick="executeDatabaseAction('INSERT')">➕ Insert</button>
+                <button type="button" class="btn-crud btn-update" onclick="executeDatabaseAction('UPDATE')">🔄 Update</button>
+                <button type="button" class="btn-crud btn-delete" onclick="executeDatabaseAction('DELETE')">🗑️ Delete</button>
+            </div>
+            <div id="modalStatusAlert" class="status-alert"></div>
+        </form>
+    </div>
+</div>
+
+
+	<script>
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz698vzBbaGRQiBK6nA35rW7J4mtA92qqzoL6rShrsemr3lz1UjMibM6-3niF3yEknD/exec";
 
-/**
- * AUTOMATION PATHWAY A: DYNAMIC DROPDOWN LOADER
- * Automatically triggers on browser boot initialization to harvest live row values from Column A
- */
 function fetchLiveStudentRoster() {
     const dropdown = document.getElementById("studentDropdown");
-    
-    if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("YOUR_DEPLOYED")) {
-        dropdown.innerHTML = '<option value="">❌ Configuration Error: Script URL not set</option>';
-        return;
-    }
-
-    // Queries your spreadsheet backend using the custom doGet routing action parameter
     fetch(`${GOOGLE_SCRIPT_URL}?action=getStudents`)
         .then(response => response.json())
         .then(namesArray => {
             dropdown.innerHTML = '<option value="">-- Tap to Choose Student --</option>';
-
             if (!namesArray || namesArray.length === 0) {
                 dropdown.innerHTML = '<option value="">⚠️ StudentList tab is empty in Sheet</option>';
                 return;
             }
-
             namesArray.forEach(name => {
                 const option = document.createElement("option");
-                option.value = name;
-                option.textContent = name;
+                option.value = name; option.textContent = name;
                 dropdown.appendChild(option);
             });
         })
-        .catch(error => {
-            console.error("Dynamic sync sequence failed:", error);
-            dropdown.innerHTML = '<option value="">❌ Error syncing name list. Refresh page.</option>';
-        });
+        .catch(() => { dropdown.innerHTML = '<option value="">❌ Error syncing roster. Refresh page.</option>'; });
 }
 
-/**
- * AUTOMATION PATHWAY B: DYNAMIC AUTOFILL FETCH
- * Queries Google macro endpoint to pull matching row cells for Grade, Parent name, and Phone number
- */
 function autofillStudentData() {
     const dropdown = document.getElementById("studentDropdown");
     const selectedValue = dropdown.value;
-    
     dropdown.classList.remove("invalid-pulse");
-
     if (!selectedValue) {
         document.getElementById("group").value = "";
         document.getElementById("parentName").value = "";
         document.getElementById("parentPhone").value = "";
         return;
     }
-
-    // Provide immediate visual loading state hints
     document.getElementById("group").value = "⏳ Loading...";
     document.getElementById("parentName").value = "⏳ Loading...";
     document.getElementById("parentPhone").value = "⏳ Loading...";
 
-    // Intercepts and downloads the specific matching record map from your StudentList rows
     fetch(`${GOOGLE_SCRIPT_URL}?action=getStudentDetails&fullName=${encodeURIComponent(selectedValue)}`)
         .then(response => response.json())
         .then(studentDetails => {
@@ -432,81 +216,79 @@ function autofillStudentData() {
                 document.getElementById("group").value = studentDetails.grade || "--";
                 document.getElementById("parentName").value = studentDetails.parent || "--";
                 document.getElementById("parentPhone").value = studentDetails.phone || "--";
-            } else {
-                // Production fallback indicators if details properties route is missing
-                document.getElementById("group").value = "--";
-                document.getElementById("parentName").value = "--";
-                document.getElementById("parentPhone").value = "--";
-            }
+            } else { clearAutofillInputsOnError(); }
         })
-        .catch(error => {
-            console.error("Autofill lookup link dropped:", error);
-            document.getElementById("group").value = "--";
-            document.getElementById("parentName").value = "--";
-            document.getElementById("parentPhone").value = "--";
-        });
+        .catch(() => { clearAutofillInputsOnError(); });
 }
 
-function openAbsenteePage() {
-    const alertBox = document.getElementById("statusAlert");
-    if (GOOGLE_SCRIPT_URL === "") {
-        alertBox.className = "status-alert alert-warning";
-        alertBox.style.display = "block";
-        alertBox.textContent = "⚠️ Please configure your live GOOGLE_SCRIPT_URL to view reports.";
+function clearAutofillInputsOnError() {
+    document.getElementById("group").value = "--";
+    document.getElementById("parentName").value = "--";
+    document.getElementById("parentPhone").value = "--";
+}
+
+function toggleSignupModal(showModal) {
+    const modal = document.getElementById("signupModal");
+    modal.style.display = showModal ? "flex" : "none";
+    if(!showModal) {
+        document.getElementById("signupForm").reset();
+        document.getElementById("modalStatusAlert").style.display = "none";
+        fetchLiveStudentRoster();
+    }
+}
+
+function openAbsenteePage() { window.open(`${GOOGLE_SCRIPT_URL}?action=getAbsentees`, '_blank'); }
+
+function executeDatabaseAction(dbMethod) {
+    const nameField = document.getElementById("modalFullName").value.trim();
+    const gradeField = document.getElementById("modalGrade").value.trim();
+    const parentField = document.getElementById("modalParent").value.trim();
+    const phoneField = document.getElementById("modalPhone").value.trim();
+    const alertBox = document.getElementById("modalStatusAlert");
+    alertBox.style.display = "block";
+
+    if (!nameField) {
+        alertBox.className = "status-alert alert-danger"; alertBox.textContent = "❌ Student Full Name is required.";
+        document.getElementById("modalFullName").focus(); return;
+    }
+    if (dbMethod === "INSERT" && (!gradeField || !parentField || !phoneField)) {
+        alertBox.className = "status-alert alert-danger"; alertBox.textContent = "❌ Please fill out all fields to Insert.";
         return;
     }
-    window.open(`${GOOGLE_SCRIPT_URL}?action=getAbsentees`, '_blank');
+    alertBox.className = "status-alert alert-loading"; alertBox.textContent = `⏳ Requesting DB ${dbMethod} Operation...`;
+
+    const payload = { action: "manageStudent", method: dbMethod, fullName: nameField, grade: gradeField, parent: parentField, phone: phoneField };
+
+    fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", cache: "no-cache", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(payload) })
+    .then(() => {
+        alertBox.className = "status-alert alert-success"; alertBox.textContent = `🎉 Action [ ${dbMethod} ] processed successfully!`;
+        setTimeout(() => { toggleSignupModal(false); }, 2500);
+    })
+    .catch(() => { alertBox.className = "status-alert alert-danger"; alertBox.textContent = "❌ Network connection failed."; });
 }
 
 function handleSubmit(statusType) {
     const dropdown = document.getElementById("studentDropdown");
     const alertBox = document.getElementById("statusAlert");
-    
-    if (!dropdown.value) {
-        dropdown.classList.add("invalid-pulse");
-        dropdown.focus();
-        return;
-    }
+    if (!dropdown.value) { dropdown.classList.add("invalid-pulse"); dropdown.focus(); return; }
     
     const selectedStudentName = dropdown.value;
-    alertBox.className = "status-alert alert-warning";
-    alertBox.style.display = "block";
-    alertBox.textContent = `⏳ Processing ${statusType}...`;
+    alertBox.className = "status-alert alert-warning"; alertBox.style.display = "block"; alertBox.textContent = `⏳ Processing ${statusType}...`;
 
-    const payload = {
-        timestamp: new Date().toISOString(),
-        student: selectedStudentName, // Aligned property to send 'student' to match sheet receiver variables
-        group: document.getElementById("group").value,
-        parentName: document.getElementById("parentName").value,
-        parentPhone: document.getElementById("parentPhone").value,
-        status: statusType
-    };
+    const payload = { timestamp: new Date().toISOString(), student: selectedStudentName, group: document.getElementById("group").value, parentName: document.getElementById("parentName").value, parentPhone: document.getElementById("parentPhone").value, status: statusType };
     
-    fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        cache: "no-cache",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify(payload)
-    })
+    fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", cache: "no-cache", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(payload) })
     .then(() => {
-        alertBox.className = "status-alert alert-success";
-        alertBox.textContent = `🎉 Success! ${selectedStudentName} has been ${statusType}ed.`;
-        setTimeout(() => {
-            document.getElementById("kioskForm").reset();
-            alertBox.style.display = "none";
-        }, 3000);
+        alertBox.className = "status-alert alert-success"; alertBox.textContent = `🎉 Success! ${selectedStudentName} has been ${statusType}ed.`;
+        setTimeout(() => { document.getElementById("kioskForm").reset(); alertBox.style.display = "none"; }, 2500);
     })
-    .catch((error) => {
-        alertBox.className = "status-alert alert-danger";
-        alertBox.textContent = "❌ Connection error. Please try again.";
-        console.error("Submission failed:", error);
-    });
+    .catch(() => { alertBox.className = "status-alert alert-danger"; alertBox.textContent = "❌ Connection error. Please try again."; });
 }
 
-// Binds the dynamic auto-fetch initialization routine as soon as the DOM workspace tree is fully drawn
-window.addEventListener("DOMContentLoaded", loadDynamicStudentDropdown);
+window.addEventListener("DOMContentLoaded", fetchLiveStudentRoster);
 </script>
 </body>
 </html>
 
+
+	
