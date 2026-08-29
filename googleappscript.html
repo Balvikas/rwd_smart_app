@@ -5,7 +5,7 @@ function doPost(e) {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     
     // =================================================================
-    // NEW PATHWAY: STUDENT REGISTRATION MANAGEMENT (Insert/Update/Delete)
+    // PATHWAY A: STUDENT REGISTRATION MANAGEMENT (Insert/Update/Delete)
     // =================================================================
     if (data.action === "manageStudent") {
       var sheet = ss.getSheetByName("StudentList");
@@ -33,8 +33,7 @@ function doPost(e) {
       if (data.method === "INSERT") {
         sheet.appendRow([data.fullName, data.grade, data.parent, data.phone.toString()]);
         return ContentService.createTextOutput(JSON.stringify({"status": "success", "info": "Inserted"}))
-                             .setMimeType(ContentService.MimeType.JSON)
-                             .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL); // FIXED: Clears browser payload handshake blocks
+                             .setMimeType(ContentService.MimeType.JSON); // FIXED: Removed invalid setXFrameOptionsMode
                              
       // Method B: UPDATE
       } else if (data.method === "UPDATE") {
@@ -46,8 +45,7 @@ function doPost(e) {
         if (data.parent) sheet.getRange(nameFoundRow, 3).setValue(data.parent);
         if (data.phone)  sheet.getRange(nameFoundRow, 4).setValue(data.phone.toString());
         return ContentService.createTextOutput(JSON.stringify({"status": "success", "info": "Updated"}))
-                             .setMimeType(ContentService.MimeType.JSON)
-                             .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+                             .setMimeType(ContentService.MimeType.JSON);
                              
       // Method C: DELETE
       } else if (data.method === "DELETE") {
@@ -57,8 +55,7 @@ function doPost(e) {
         }
         sheet.deleteRow(nameFoundRow);
         return ContentService.createTextOutput(JSON.stringify({"status": "success", "info": "Deleted"}))
-                             .setMimeType(ContentService.MimeType.JSON)
-                             .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+                             .setMimeType(ContentService.MimeType.JSON);
       }
     }
     
@@ -86,21 +83,83 @@ function doPost(e) {
     ]);
 
     return ContentService.createTextOutput(JSON.stringify({"status": "success"}))
-                         .setMimeType(ContentService.MimeType.JSON)
-                         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+                         .setMimeType(ContentService.MimeType.JSON);
 
   } catch(error) {
     return ContentService.createTextOutput(JSON.stringify({"status": "error", "message": error.toString()}))
                          .setMimeType(ContentService.MimeType.JSON);
   }
 }
-
 function doGet(e) {
   var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : "";
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
   
+  // =================================================================
+  // ROUTE 1: FETCH RAW NAMES LIST (Populates index/kiosk dropdown)
+  // =================================================================
+  if (action === "getStudents") {
+    try {
+      var sheet = ss.getSheetByName("StudentList");
+      var namesList = [];
+      if (sheet) {
+        var lastRow = sheet.getLastRow();
+        if (lastRow >= 2) {
+          var values = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+          for (var i = 0; i < values.length; i++) {
+            var rowValue = values[i].toString().trim();
+            if (rowValue !== "") { 
+              namesList.push(rowValue); 
+            }
+          }
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify(namesList))
+                           .setMimeType(ContentService.MimeType.JSON); // FIXED: Removed invalid setXFrameOptionsMode
+    } catch(err) {
+      return ContentService.createTextOutput(JSON.stringify(["Error: " + err.toString()]))
+                           .setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
+  // =================================================================
+  // ROUTE 2: FETCH INDIVIDUAL STUDENT DETAILS (Autofills Fields)
+  // =================================================================
+  if (action === "getStudentDetails") {
+    try {
+      var sheet = ss.getSheetByName("StudentList");
+      var targetName = e.parameter.fullName ? e.parameter.fullName.toLowerCase().trim() : "";
+      
+      if (sheet) {
+        var lastRow = sheet.getLastRow();
+        if (lastRow >= 2) {
+          // Read columns: Full Name (1), GRADE (2), Parent (3), Phone Number (4)
+          var rowsData = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
+          for (var i = 0; i < rowsData.length; i++) {
+            if (rowsData[i][0].toString().toLowerCase().trim() === targetName) {
+              var result = {
+                grade: rowsData[i][1].toString(), // FIXED: Extracted correct individual column arrays index positioning
+                parent: rowsData[i][2].toString(),
+                phone: rowsData[i][3].toString()
+              };
+              return ContentService.createTextOutput(JSON.stringify(result))
+                                   .setMimeType(ContentService.MimeType.JSON);
+            }
+          }
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({"error": "Student profile not found"}))
+                           .setMimeType(ContentService.MimeType.JSON);
+    } catch(err) {
+      return ContentService.createTextOutput(JSON.stringify({"error": err.toString()}))
+                           .setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  
+  // =================================================================
+  // ORIGINAL PATHWAY: YOUR EXACT UNCHANGED ABSENTEE REPORT PAGE
+  // =================================================================
   if (action === "getAbsentees") {
     try {
-      var ss = SpreadsheetApp.getActiveSpreadsheet();
       var sheet = ss.getSheetByName("AbsentList");
       var absenteesList = [];
       
@@ -128,8 +187,7 @@ function doGet(e) {
       htmlOutput += "li:last-child { border-bottom: none; }";
       htmlOutput += ".empty-state { text-align: center; color: #64748b; font-style: italic; padding: 2rem 0; font-size: 1.1rem; }";
       htmlOutput += "</style></head><body>";
-      htmlOutput += "<div class='card'>";
-      htmlOutput += "<h1>📋 Today's Absentee List</h1>";
+      htmlOutput += "<div class='card'><h1>📋 Today's Absentee List</h1>";
       
       if (absenteesList.length === 0) {
         htmlOutput += "<div class='empty-state'>🎉 All students are accounted for today!</div>";
@@ -140,9 +198,9 @@ function doGet(e) {
         }
         htmlOutput += "</ul>";
       }
-      
       htmlOutput += "</div></body></html>";
       
+      // ✅ This is valid because HtmlService supports setXFrameOptionsMode
       return HtmlService.createHtmlOutput(htmlOutput)
         .setTitle("Today's Absentees")
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
@@ -152,5 +210,5 @@ function doGet(e) {
     }
   }
   
-  return HtmlService.createHtmlOutput("<h2>Backend API is active. Ready to accept student logs!</h2><p>To view the absentee listing directly from a browser, append <strong>?action=getAbsentees</strong> to the end of your address bar URL parameter link string.</p>");
+  return HtmlService.createHtmlOutput("<h2>Backend API is active. Ready to accept student logs!</h2>");
 }
