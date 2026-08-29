@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bal Vikas Student Registration</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --primary: #ea580c;
+            --primary-dark: #9a3412;
+            --bg: #f8fafc;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+        body { 
+            background-color: var(--bg); 
+            min-height: 100vh;
+            font-family: system-ui, -apple-system, sans-serif;
+            color: var(--text-main);
+            padding: 2rem 1rem;
+        }
+        .container {
+            width: 100%;
+            max-width: 650px;
+            margin: 0 auto;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #fed7aa;
+            padding-bottom: 1rem;
+        }
+        .header h1 { font-size: 1.8rem; color: var(--primary-dark); font-weight: 800; }
+        .header p { color: var(--text-muted); font-size: 0.95rem; margin-top: 0.2rem; }
+        
+        .field-group { margin-bottom: 1.25rem; }
+        .control-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .input-kiosk {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            background-color: var(--bg);
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        .input-kiosk:focus {
+            border-color: var(--primary);
+            background-color: white;
+            box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.1);
+        }
+        
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            margin-top: 2rem;
+        }
+        @media (min-width: 576px) {
+            .btn-grid { grid-template-columns: 1fr 1fr 1fr; }
+        }
+        .btn-action {
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 10px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: transform 0.1s ease, filter 0.2s ease;
+        }
+        .btn-action:active { transform: scale(0.98); }
+        .btn-insert { background-color: var(--success); }
+        .btn-update { background-color: var(--warning); }
+        .btn-delete { background-color: var(--danger); }
+        .btn-action:hover { filter: brightness(0.92); }
+
+        .status-alert {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 700;
+            display: none;
+        }
+        .alert-loading { background-color: #fef3c7; color: #92400e; }
+        .alert-success { background-color: #d1fae5; color: #065f46; }
+        .alert-danger { background-color: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>📝 Student Roster Management</h1>
+        <p>Insert, Update, or Delete profiles from the Student Roster Database</p>
+    </div>
+
+    <form id="signupForm" onsubmit="return false;">
+        <div class="field-group">
+            <label for="fullName" class="control-label">Student's Full Name</label>
+            <!-- Added autocomplete="off" attribute security parameter -->
+            <input type="text" id="fullName" class="input-kiosk" autocomplete="off" placeholder="Enter full name (Exact match for Update/Delete)" required>
+        </div>
+
+        <div class="field-group">
+            <label for="grade" class="control-label">Grade / Group</label>
+            <input type="text" id="grade" class="input-kiosk" autocomplete="off" placeholder="e.g. Group 4, Pre-School">
+        </div>
+
+        <div class="field-group">
+            <label for="parent" class="control-label">Parent / Guardian Name</label>
+            <input type="text" id="parent" class="input-kiosk" autocomplete="off" placeholder="Enter parent full name">
+        </div>
+
+        <div class="field-group">
+            <label for="phone" class="control-label">Parent Phone Number</label>
+            <input type="text" id="phone" class="input-kiosk" autocomplete="off" placeholder="Enter contact phone number">
+        </div>
+
+        <div class="btn-grid">
+            <button type="button" class="btn-action btn-insert" onclick="executeDatabaseAction('INSERT')">
+                ➕ Insert New
+            </button>
+            <button type="button" class="btn-action btn-update" onclick="executeDatabaseAction('UPDATE')">
+                🔄 Update Profile
+            </button>
+            <button type="button" class="btn-action btn-delete" onclick="executeDatabaseAction('DELETE')">
+                🗑️ Delete Student
+            </button>
+        </div>
+
+        <div id="statusAlert" class="status-alert"></div>
+    </form>
+</div>
+
+<script>
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyj1GA4U9OEjlvKX1Mv7QfJbknIRLhXQiCq_iQwk33SXkB1USjbJrd2bHFkdJmnPPqN/exec";
+
+    function executeDatabaseAction(dbMethod) {
+        const nameField = document.getElementById("fullName").value.trim();
+        const gradeField = document.getElementById("grade").value.trim();
+        const parentField = document.getElementById("parent").value.trim();
+        const phoneField = document.getElementById("phone").value.trim();
+        const alertBox = document.getElementById("statusAlert");
+
+        alertBox.style.display = "block";
+
+        if (!nameField) {
+            alertBox.className = "status-alert alert-danger";
+            alertBox.textContent = "❌ Student Full Name is required for all actions.";
+            document.getElementById("fullName").focus();
+            return;
+        }
+
+        if (dbMethod === "INSERT" && (!gradeField || !parentField || !phoneField)) {
+            alertBox.className = "status-alert alert-danger";
+            alertBox.textContent = "❌ Please fill out all fields to perform an Insert action.";
+            return;
+        }
+
+        alertBox.className = "status-alert alert-loading";
+        alertBox.textContent = `⏳ Requesting DB ${dbMethod} Operation...`;
+
+        // FIXED: JSON property keys now completely align with your sheet script data assignments
+        const payload = {
+            action: "manageStudent",
+            method: dbMethod,
+            fullName: nameField,   
+            grade: gradeField,     
+            parent: parentField,  
+            phone: phoneField      
+        };
+
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            cache: "no-cache",
+            headers: { "Content-Type": "text/plain" }, 
+            body: JSON.stringify(payload)
+        })
+        .then(() => {
+            alertBox.className = "status-alert alert-success";
+            alertBox.textContent = `🎉 Action [ ${dbMethod} ] processed successfully! Check your Google Sheet.`;
+            
+            setTimeout(() => {
+                document.getElementById("signupForm").reset();
+                alertBox.style.display = "none";
+            }, 4000);
+        })
+        .catch(error => {
+            alertBox.className = "status-alert alert-danger";
+            alertBox.textContent = "❌ Network connection failed.";
+            console.error(error);
+        });
+    }
+</script>
+</body>
+</html>
