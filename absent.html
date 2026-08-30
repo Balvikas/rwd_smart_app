@@ -14,119 +14,84 @@
             --text-main: #1e293b;
             --text-muted: #64748b;
             --border: #e2e8f0;
-            --success: #10b981;
-            --danger: #ef4444;
+            --danger: #fee2e2;
         }
         body { 
             background-color: var(--bg); 
             min-height: 100vh;
-            font-family: system-ui, -apple-system, sans-serif;
-            color: var(--text-main);
+            font-family: system-ui, -apple-system, sans-serif; 
+            color: var(--text-main); 
             padding: 2rem 1rem;
         }
-        .container {
-            width: 100%;
-            max-width: 650px;
-            margin: 0 auto;
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 2rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            position: relative;
+        .container { 
+            width: 100%; 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: white; 
+            border: 1px solid var(--border); 
+            border-radius: 16px; 
+            padding: 2rem; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
         }
         
-        /* NEW: STYLISH RETURN TO APP BUTTON BACK LINK */
+        /* PREMIUM BACK BUTTON NAVIGATION STYLING */
         .btn-back-kiosk {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 0.85rem;
-            padding: 0.5rem 0.8rem;
-            border: 2px solid var(--border);
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
-            transition: all 0.2s ease;
-            background: white;
+            display: inline-flex; 
+            align-items: center; 
+            gap: 0.5rem; 
+            color: #475569;
+            text-decoration: none; 
+            font-weight: 700; 
+            font-size: 0.9rem; 
+            padding: 0.6rem 1.2rem;
+            border: 2px solid #cbd5e1; 
+            border-radius: 8px; 
+            margin-bottom: 2rem;
+            transition: all 0.2s ease; 
+            background-color: #f1f5f9; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            cursor: pointer;
         }
-        .btn-back-kiosk:hover {
-            color: var(--primary);
-            border-color: var(--primary);
-            background-color: #fff7ed;
+        .btn-back-kiosk:hover { 
+            color: var(--primary); 
+            border-color: var(--primary); 
+            background-color: #fff7ed; 
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 2rem;
-            border-bottom: 2px solid #fed7aa;
-            padding-bottom: 1rem;
-        }
+        .header { text-align: center; margin-bottom: 2rem; border-bottom: 2px solid #fed7aa; padding-bottom: 1rem; }
         .header h1 { font-size: 1.8rem; color: var(--primary-dark); font-weight: 800; }
         .header p { color: var(--text-muted); font-size: 0.95rem; margin-top: 0.2rem; }
-        
-        .search-box { 
-            display: flex; 
-            gap: 0.75rem; 
-            margin-bottom: 1.5rem; 
-            align-items: flex-end; 
-        }
+        .search-box { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; align-items: flex-end; }
         .field-group { flex-grow: 1; }
-        .control-label {
-            display: block;
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            margin-bottom: 0.4rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        .input-calendar {
-            width: 100%;
-            padding: 1rem 1.2rem;
-            font-size: 1.1rem;
-            border-radius: 10px;
-            border: 2px solid var(--border);
-            background-color: var(--bg);
-            color: var(--text-main);
-            outline: none;
-            transition: all 0.2s ease;
-        }
-        .input-calendar:focus {
-            border-color: var(--primary);
-            background-color: white;
-            box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.1);
-        }
+        .control-label { display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .input-calendar { width: 100%; padding: 1rem 1.2rem; font-size: 1.1rem; border-radius: 10px; border: 2px solid var(--border); background-color: var(--bg); color: var(--text-main); outline: none; transition: all 0.2s ease; }
+        .input-calendar:focus { border-color: var(--primary); background-color: white; box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.1); }
         
-        .btn-audit {
-            padding: 0 1.5rem;
-            font-size: 1rem;
-            font-weight: 700;
-            border-radius: 10px;
-            border: none;
-            color: white;
-            background-color: var(--primary);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            transition: transform 0.1s ease, filter 0.2s ease;
-            height: 52px;
+        .btn-audit { 
+            padding: 0 1.5rem; 
+            font-size: 1rem; 
+            font-weight: 700; 
+            border-radius: 10px; 
+            border: none; 
+            color: white; 
+            background-color: var(--primary); 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 0.5rem; 
+            transition: transform 0.1s ease, filter 0.2s ease; 
+            height: 52px; 
         }
         .btn-audit:hover { filter: brightness(0.92); }
-        .btn-audit:active { transform: scale(0.98); }
-        
         .status-alert { margin-top: 1rem; padding: 1rem; border-radius: 10px; text-align: center; font-weight: 700; display: none; }
-        .alert-danger { background-color: #fee2e2; color: #991b1b; }
+        .alert-danger { background-color: var(--danger); color: #991b1b; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- BACK TO APP NAVIGATOR LINK WRAPPER -->
+    <!-- VISIBLE RETURN LINK BACK TO ATTENDANCE KIOSK HOMEPAGE -->
     <a href="index.html" class="btn-back-kiosk">
         <svg xmlns="http://w3.org" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -155,34 +120,28 @@
             Run Audit
         </button>
     </div>
-
     <div id="statusAlert" class="status-alert"></div>
 </div>
 
 <script>
     const GOOGLE_SCRIPT_URL = GLOBAL_CONFIG.GOOGLE_SCRIPT_URL;
 
-    // Automatically set default value of calendar selector to today's date
     window.addEventListener("DOMContentLoaded", () => {
-        const today = new Date().toISOString().split('T');
+        const today = new Date().toISOString().split('T')[0];
         document.getElementById("auditDate").value = today;
     });
 
     function runAbsenteeAudit() {
         const dateInput = document.getElementById("auditDate").value;
         const alertBox = document.getElementById("statusAlert");
-
         if (!dateInput) {
             alertBox.className = "status-alert alert-danger";
             alertBox.style.display = "block";
             alertBox.textContent = "❌ Please pick a date using the calendar input field.";
             return;
         }
-
-        // Clear out warning indicators
         alertBox.style.display = "none";
-
-        // Launch the clean HTML table directly inside a new browser tab window
+        // Fires up the newly repaired HTML table dashboard directly into an isolated browser tab window
         window.open(`${GOOGLE_SCRIPT_URL}?action=getAbsenteesByDate&dateStr=${dateInput}`, '_blank');
     }
 </script>
