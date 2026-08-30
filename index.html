@@ -128,26 +128,36 @@
                     <label for="parentPhone" class="control-label">Parent Phone Number</label>
                     <input type="text" id="parentPhone" class="input-kiosk" placeholder="--" readonly>
                 </div>
-                <div class="btn-grid">
-                    <button type="button" class="btn-kiosk btn-checkin" onclick="handleSubmit('Check-in')"><span>🟢</span> Check In</button>
-                    <button type="button" class="btn-kiosk btn-checkout" onclick="handleSubmit('Check-out')"><span>🔴</span> Check Out</button>
-                </div>
-                <div style="margin-top: 0.75rem;">
-                    <button type="button" class="btn-kiosk" style="background-color: #4f46e5; width: 100%; font-size: 1.05rem; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);" onclick="openAbsenteePage()"><span>📋</span> Absentee Report</button>
-                </div>
-				
-				<!-- ➕ PASTE YOUR NEW PENDING CHECK-OUT ROSTER BUTTON RIGHT HERE -->
-				<div style="margin-top: 0.5rem;">
-				    <button type="button" class="btn-kiosk" style="background-color: #ea580c; width: 100%; box-shadow: 0 6px 16px rgba(234, 88, 12, 0.2);" onclick="getPendingCheckOut()"><span>🚪</span> Pending Check-Out Roster
-				    </button>
-				</div>
+              <!-- GRID 1: ATTENDANCE TRACKER WORKSPACE BUTTONS -->
+<div class="btn-grid">
+    <button type="button" class="btn-kiosk btn-checkin" onclick="handleSubmit('Check-in')">
+        <span>🟢</span> Check In
+    </button>
+    <button type="button" class="btn-kiosk btn-checkout" onclick="handleSubmit('Check-out')">
+        <span>🔴</span> Check Out
+    </button>
+</div>
 
-<!-- 3. DATE WISE HISTORICAL AUDITOR LINK -->
-<div style="margin-top: 0.5rem;">
-    <a href="absent.html" class="btn-kiosk" style="background-color: #475569; width: 100%; text-decoration: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(71, 85, 105, 0.15);">
-        <span>📅</span> Date Wise Absentee Auditor
+<!-- DAILY SYSTEM ABSENTEE REPORT -->
+<div style="margin-top: 0.75rem;">
+    <button type="button" class="btn-kiosk" style="background-color: #4f46e5; width: 100%; font-size: 1.05rem; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);" onclick="openAbsenteePage()">
+        <span>📋</span> Absentee Report
+    </button>
+</div>
+				
+<!-- 🌟 GRID 2: COMPACT ADMISTRATIVE DASHBOARD BUTTONS SIDE-BY-SIDE -->
+<div class="btn-grid" style="margin-top: 0.5rem;">
+    <!-- LEFT PANEL UTILITY -->
+    <button type="button" class="btn-kiosk" style="background-color: #ea580c; font-size: 1rem; padding: 0.85rem; box-shadow: 0 6px 16px rgba(234, 88, 12, 0.15);" onclick="getPendingCheckOut()">
+        <span>🚪</span> Pending Check-Out
+    </button>
+
+    <!-- RIGHT PANEL UTILITY (CRISP EASY NAME) -->
+    <a href="absent.html" class="btn-kiosk" style="background-color: #475569; font-size: 1rem; padding: 0.85rem; text-decoration: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(71, 85, 105, 0.15);">
+        <span>📅</span> Date History Audit
     </a>
 </div>
+
 
 				
                 <div id="statusAlert" class="status-alert"></div>
