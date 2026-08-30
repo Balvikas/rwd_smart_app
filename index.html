@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+	<!-- Include your single global config manager file -->
+    <script src="config.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Bal Vikas Student Kiosk</title>
@@ -181,8 +183,9 @@
 
 
 	<script>
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQGtahzr7rTeIW5co1fpwJmgvY_WzAecg9CUF25ikvcJGwmqg_r2-1GygZtRoUDtD8/exec";
-
+//const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQGtahzr7rTeIW5co1fpwJmgvY_WzAecg9CUF25ikvcJGwmqg_r2-1GygZtRoUDtD8/exec";
+const GOOGLE_SCRIPT_URL = GLOBAL_CONFIG.GOOGLE_SCRIPT_URL;
+		
 // 1. ADD THIS GLOBAL VARIABLE CONTAINER (Put it at the very top of your script block)
 let dynamicStudentDatabase = {};
 
