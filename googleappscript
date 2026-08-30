@@ -162,17 +162,24 @@ function doGet(e) {
     }
   }
   
+    // =================================================================
+  // ROUTER 3: FIXED - COMBINED SAME-ROW CHECK-IN & CHECK-OUT HISTORY
   // =================================================================
-  // NEW ROUTE 3: PENDING CHECK-OUT ROSTER DASHBOARD
+    // =================================================================
+  // ROUTER 3: GROUPED BY GRADE & ALPHABETICAL PENDING CHECK-OUT ROSTER
   // =================================================================
   if (action === "getPendingCheckOut") {
     try {
       var logSheet = ss.getSheetByName("Sheet1") || ss.getSheets()[0]; 
       var lastRow = logSheet.getLastRow();
-      var latestStatusMap = {};
+      
+      var pendingRawMap = {}; // Tracks live layout state flags
+      var historyRawMap = {}; // Combines today's logs side-by-side by student name
 
       if (lastRow >= 2) {
         var logsData = logSheet.getRange(2, 1, lastRow - 1, 6).getValues();
+        var todayStr = Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), "yyyy-MM-dd");
+        
         for (var i = 0; i < logsData.length; i++) {
           var timestamp = logsData[i][0];
           var student = logsData[i][1].toString().trim();
@@ -182,54 +189,134 @@ function doGet(e) {
           var currentStatus = logsData[i][5].toString().trim();
 
           if (student !== "") {
-            latestStatusMap[student] = {
-              timestamp: Utilities.formatDate(new Date(timestamp), ss.getSpreadsheetTimeZone(), "h:mm a"),
-              group: group,
-              parent: parent,
-              phone: phone,
-              status: currentStatus
-            };
+            var logDateStr = Utilities.formatDate(new Date(timestamp), ss.getSpreadsheetTimeZone(), "yyyy-MM-dd");
+            var formattedTime = Utilities.formatDate(new Date(timestamp), ss.getSpreadsheetTimeZone(), "h:mm a");
+
+            // Filter strictly for TODAY'S log activity
+            if (logDateStr === todayStr) {
+              
+              // 1. Process "Still Inside" occupancy state flags
+              if (currentStatus === "Check-in") {
+                pendingRawMap[student] = { timestamp: formattedTime, group: group, parent: parent, phone: phone, status: currentStatus };
+              } else if (currentStatus === "Check-out") {
+                pendingRawMap[student] = { status: currentStatus };
+              }
+
+              // 2. Build paired side-by-side timeline tracking history logs
+              if (!historyRawMap[student]) {
+                historyRawMap[student] = { name: student, group: group, checkIn: "--", checkOut: "--" };
+              }
+              if (currentStatus === "Check-in") historyRawMap[student].checkIn = formattedTime;
+              if (currentStatus === "Check-out") historyRawMap[student].checkOut = formattedTime;
+            }
           }
         }
       }
 
-      var htmlOutput = "<html><head><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Pending Check-Out Roster</title>";
-      htmlOutput += "<style>";
-      htmlOutput += "body { font-family: system-ui, -apple-system, sans-serif; background-color: #f8fafc; color: #1e293b; padding: 2rem 1rem; margin: 0; }";
-      htmlOutput += ".card { width: 100%; max-width: 600px; margin: 0 auto; background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }";
-      htmlOutput += "h1 { font-size: 1.4rem; font-weight: 800; margin-bottom: 1.5rem; color: #ea580c; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #fed7aa; padding-bottom: 0.5rem; }";
-      htmlOutput += ".student-row { padding: 1rem 0.5rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }";
-      htmlOutput += ".details { font-size: 0.85rem; color: #64748b; margin-top: 0.2rem; }";
-      htmlOutput += ".time-badge { background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; padding: 0.3rem 0.6rem; border-radius: 20px; font-weight: 700; font-size: 0.8rem; }";
-      htmlOutput += ".empty-state { text-align: center; color: #10b981; font-weight: 700; padding: 2rem 0; font-size: 1.1rem; }";
-      htmlOutput += "</style></head><body><div class='card'><h1>🚪 Pending Check-Out Roster</h1>";
-
-      var hasActiveStudents = false;
-      var sortedStudents = Object.keys(latestStatusMap).sort();
-
-      for (var k = 0; k < sortedStudents.length; k++) {
-        var studentKey = sortedStudents[k];
-        if (latestStatusMap[studentKey].status === "Check-in") {
-          hasActiveStudents = true;
-          htmlOutput += "<div class='student-row'><div><strong>" + studentKey + "</strong> (" + latestStatusMap[studentKey].group + ")";
-          htmlOutput += "<div class='details'>👪 " + latestStatusMap[studentKey].parent + " • 📞 " + latestStatusMap[studentKey].phone + "</div></div>";
-          htmlOutput += "<div class='time-badge'>In: " + latestStatusMap[studentKey].timestamp + "</div></div>";
+      // Group active "Still Inside" students by Grade Level
+      var groupedPending = {};
+      for (var pKey in pendingRawMap) {
+        if (pendingRawMap[pKey].status === "Check-in") {
+          var pGrade = pendingRawMap[pKey].group || "Unassigned Grade";
+          if (!groupedPending[pGrade]) groupedPending[pGrade] = [];
+          groupedPending[pGrade].push({ name: pKey, parent: pendingRawMap[pKey].parent, phone: pendingRawMap[pKey].phone, time: pendingRawMap[pKey].timestamp });
         }
       }
 
-      if (!hasActiveStudents) {
-        htmlOutput += "<div class='empty-state'>🎉 All students have checked out safely!</div>";
+      // Group "Daily History Log" students by Grade Level
+      var groupedHistory = {};
+      for (var hKey in historyRawMap) {
+        var hGrade = historyRawMap[hKey].group || "Unassigned Grade";
+        if (!groupedHistory[hGrade]) groupedHistory[hGrade] = [];
+        groupedHistory[hGrade].push(historyRawMap[hKey]);
       }
 
+      // Sort Grade Category Header Arrays
+      var sortedPendingGrades = Object.keys(groupedPending).sort();
+      var sortedHistoryGrades = Object.keys(groupedHistory).sort();
+
+      // Alphabetically sort student names (A-Z) inside each grouped Grade Section array
+      for (var g1 = 0; g1 < sortedPendingGrades.length; g1++) {
+        groupedPending[sortedPendingGrades[g1]].sort(function(a, b) { return a.name.toLowerCase().trim().localeCompare(b.name.toLowerCase().trim(), undefined, { numeric: true }); });
+      }
+      for (var g2 = 0; g2 < sortedHistoryGrades.length; g2++) {
+        groupedHistory[sortedHistoryGrades[g2]].sort(function(a, b) { return a.name.toLowerCase().trim().localeCompare(b.name.toLowerCase().trim(), undefined, { numeric: true }); });
+      }
+
+      var htmlOutput = "<html><head><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Grouped Pending Check-Out Dashboard</title>";
+      htmlOutput += "<style>";
+      htmlOutput += "body { font-family: system-ui, -apple-system, sans-serif; background-color: #f8fafc; color: #1e293b; padding: 2rem 1rem; margin: 0; }";
+      htmlOutput += ".card { width: 100%; max-width: 850px; margin: 0 auto 2rem auto; background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); overflow-x: auto; }";
+      htmlOutput += "h1, h2 { font-size: 1.3rem; font-weight: 800; margin-bottom: 1.25rem; color: #ea580c; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #fed7aa; padding-bottom: 0.5rem; }";
+      htmlOutput += "table { width: 100%; border-collapse: collapse; white-space: nowrap; text-align: left; }";
+      htmlOutput += "th { font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; padding: 0.75rem 1rem; border-bottom: 2px solid #e2e8f0; }";
+      htmlOutput += "td { padding: 0.85rem 1rem; font-size: 0.95rem; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }";
+      htmlOutput += ".grade-section-header { background-color: #f1f5f9; color: #1e293b; font-weight: 800; font-size: 1rem; padding: 0.75rem 1rem; text-transform: uppercase; border-left: 4px solid #ea580c; }";
+      htmlOutput += "tr:hover { background-color: #f8fafc; }";
+      htmlOutput += ".badge-in { background-color: #d1fae5; color: #065f46; padding: 0.25rem 0.5rem; border-radius: 6px; font-weight: 600; }";
+      htmlOutput += ".badge-out { background-color: #fee2e2; color: #991b1b; padding: 0.25rem 0.5rem; border-radius: 6px; font-weight: 600; }";
+      htmlOutput += ".time-badge { background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; padding: 0.3rem 0.6rem; border-radius: 20px; font-weight: 700; font-size: 0.8rem; display: inline-block; }";
+      htmlOutput += ".empty-state { text-align: center; color: #64748b; font-style: italic; padding: 2rem 0; font-size: 1.1rem; }";
+      htmlOutput += "</style></head><body>";
+      
+      // =================================================================
+      // CARD 1: PENDING CHECK-OUT (STILL INSIDE - GROUPED & ALPHABETICAL)
+      // =================================================================
+      htmlOutput += "<div class='card'><h1>🚪 Students Still Inside</h1>";
+      if (sortedPendingGrades.length === 0) {
+        htmlOutput += "<div class='empty-state'>🎉 All students have checked out safely today!</div>";
+      } else {
+        htmlOutput += "<table><thead><tr><th>Student Name</th><th>Parent / Guardian</th><th>Phone Number</th><th style='text-align:right;'>Checked In</th></tr></thead><tbody>";
+        for (var m = 0; m < sortedPendingGrades.length; m++) {
+          var pendingGradeName = sortedPendingGrades[m];
+          var pendingStudents = groupedPending[pendingGradeName];
+          
+          htmlOutput += "<tr><td colspan='4' class='grade-section-header'>📂 " + pendingGradeName + " (" + pendingStudents.length + " Inside)</td></tr>";
+          
+          for (var s1 = 0; s1 < pendingStudents.length; s1++) {
+            var pStudent = pendingStudents[s1];
+            htmlOutput += "<tr><td style='font-weight:600;'>📍 " + pStudent.name + "</td><td>" + pStudent.parent + "</td><td>📞 " + pStudent.phone + "</td><td style='text-align:right;'><span class='time-badge'>In: " + pStudent.time + "</span></td></tr>";
+          }
+        }
+        htmlOutput += "</tbody></table>";
+      }
+      htmlOutput += "</div>";
+
+      // =================================================================
+      // CARD 2: PAIRED DAILY HISTORY LOG (GROUPED & ALPHABETICAL)
+      // =================================================================
+      htmlOutput += "<div class='card'><h2>🕒 Today's Activity Log History</h2>";
+      if (sortedHistoryGrades.length === 0) {
+        htmlOutput += "<div class='empty-state'>No attendance entries logged yet today.</div>";
+      } else {
+        htmlOutput += "<table><thead><tr><th>Student Name</th><th style='text-align:right;'>Timeline Log (Side-by-Side)</th></tr></thead><tbody>";
+        for (var n = 0; n < sortedHistoryGrades.length; n++) {
+          var historyGradeName = sortedHistoryGrades[n];
+          var historyStudents = groupedHistory[historyGradeName];
+          
+          htmlOutput += "<tr><td colspan='2' class='grade-section-header'>📂 " + historyGradeName + " (" + historyStudents.length + " Logged Today)</td></tr>";
+          
+          for (var s2 = 0; s2 < historyStudents.length; s2++) {
+            var hStudent = historyStudents[s2];
+            htmlOutput += "<tr><td style='font-weight:600;'>📍 " + hStudent.name + "</td><td style='text-align:right;'><span class='badge-in'>🟢 In: " + hStudent.checkIn + "</span> &nbsp; <span class='badge-out'>🔴 Out: " + hStudent.checkOut + "</span></td></tr>";
+          }
+        }
+        htmlOutput += "</tbody></table>";
+      }
       htmlOutput += "</div></body></html>";
+      
       return HtmlService.createHtmlOutput(htmlOutput).setTitle("Pending Check-Out Roster").setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     } catch(err) {
-      return HtmlService.createHtmlOutput("<h2>❌ Error building view: " + err.toString() + "</h2>");
+      return HtmlService.createHtmlOutput("<h2>❌ Error building timeline view: " + err.toString() + "</h2>");
     }
   }
 
+
   // =================================================================
   // ORIGINAL PATHWAY: YOUR EXACT UNCHANGED ABSENTEE REPORT PAGE
+  // =================================================================
+  // =================================================================
+  // ORIGINAL PATHWAY UPGRADED: BULLETPROOF HTML TABLE ABSENTEE REPORT
   // =================================================================
   if (action === "getAbsentees") {
     try {
@@ -239,26 +326,41 @@ function doGet(e) {
       if (sheet) {
         var lastRow = sheet.getLastRow();
         if (lastRow >= 2) {
-          var range = sheet.getRange(2, 1, lastRow - 1, 1);
-          var values = range.getValues();
+          // Read all 4 columns: Absentees (Col 1), GRADE (Col 2), Parent (Col 3), Phone Number (Col 4)
+          var values = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
           for (var i = 0; i < values.length; i++) {
-            var rowValue = values[i].toString().trim();
-            if (rowValue !== "") {
-              absenteesList.push(rowValue);
+            var studentName = values[i][0].toString().trim();
+            if (studentName !== "") {
+              absenteesList.push({
+                name: studentName,
+                grade: values[i][1].toString().trim() || "--",
+                parent: values[i][2].toString().trim() || "--",
+                phone: values[i][3].toString().trim() || "--"
+              });
             }
           }
         }
       }
 
+      // Automatically sort the today's absentees list alphabetically (A to Z)
+      absenteesList.sort(function (a, b) {
+        return a.name.localeCompare(b, undefined, { sensitivity: 'base', numeric: true });
+      });
+
       var htmlOutput = "<html><head><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Today's Absentees</title>";
       htmlOutput += "<style>";
       htmlOutput += "body { font-family: system-ui, -apple-system, sans-serif; background-color: #f8fafc; color: #1e293b; padding: 2rem 1rem; margin: 0; }";
-      htmlOutput += ".card { width: 100%; max-width: 500px; margin: 0 auto; background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }";
-      htmlOutput += "h1 { font-size: 1.4rem; font-weight: 800; margin-bottom: 1.5rem; color: #ea580c; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #fed7aa; padding-bottom: 0.5rem; }";
-      htmlOutput += "ul { list-style: none; padding: 0; margin: 0; }";
-      htmlOutput += "li { padding: 1rem 0.5rem; font-weight: 600; color: #475569; border-bottom: 1px solid #f1f5f9; }";
-      htmlOutput += "li:last-child { border-bottom: none; }";
-      htmlOutput += ".empty-state { text-align: center; color: #64748b; font-style: italic; padding: 2rem 0; font-size: 1.1rem; }";
+      htmlOutput += ".card { width: 100%; max-width: 850px; margin: 0 auto; background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); overflow-x: auto; }";
+      htmlOutput += "h1 { font-size: 1.3rem; font-weight: 800; margin-bottom: 1.5rem; color: #ea580c; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #fed7aa; padding-bottom: 0.5rem; }";
+      
+      // TABLE STRUCTURE STYLES
+      htmlOutput += "table { width: 100%; border-collapse: collapse; white-space: nowrap; text-align: left; }";
+      htmlOutput += "th { font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.75rem 1rem; border-bottom: 2px solid #e2e8f0; }";
+      htmlOutput += "td { padding: 0.85rem 1rem; font-size: 0.95rem; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }";
+      htmlOutput += "tr:last-child td { border-bottom: none; }";
+      htmlOutput += "tr:hover { background-color: #f8fafc; }";
+      htmlOutput += ".grade-badge { color: #ea580c; font-weight: 700; background-color: #fff7ed; padding: 0.25rem 0.5rem; border-radius: 6px; font-size: 0.8rem; display: inline-block; }";
+      htmlOutput += ".empty-state { text-align: center; color: #10b981; font-weight: 700; padding: 2rem 0; font-size: 1.1rem; }";
       htmlOutput += "</style></head><body>";
       htmlOutput += "<div class='card'>";
       htmlOutput += "<h1>📋 Today's Absentee List</h1>";
@@ -266,11 +368,32 @@ function doGet(e) {
       if (absenteesList.length === 0) {
         htmlOutput += "<div class='empty-state'>🎉 All students are accounted for today!</div>";
       } else {
-        htmlOutput += "<ul>";
+        // BUILD THE RIGID TABLE LAYOUT GRID
+        htmlOutput += "<table>";
+        htmlOutput += "  <thead>";
+        htmlOutput += "    <tr>";
+        htmlOutput += "      <th style='width: 5%;'>#</th>";
+        htmlOutput += "      <th style='width: 35%;'>Student Name</th>";
+        htmlOutput += "      <th style='width: 15%;'>Grade</th>";
+        htmlOutput += "      <th style='width: 25%;'>Parent / Guardian</th>";
+        htmlOutput += "      <th style='width: 20%;'>Phone Number</th>";
+        htmlOutput += "    </tr>";
+        htmlOutput += "  </thead>";
+        htmlOutput += "  <tbody>";
+        
         for (var j = 0; j < absenteesList.length; j++) {
-          htmlOutput += "<li>" + (j + 1) + ". " + absenteesList[j] + "</li>";
+          var item = absenteesList[j];
+          htmlOutput += "    <tr>";
+          htmlOutput += "      <td style='font-weight: 700; color: #64748b;'>" + (j + 1) + "</td>";
+          htmlOutput += "      <td style='font-weight: 600; color: #1e293b;'>📍 " + item.name + "</td>";
+          htmlOutput += "      <td><span class='grade-badge'>" + item.grade + "</span></td>";
+          htmlOutput += "      <td>👪 " + item.parent + "</td>";
+          htmlOutput += "      <td style='font-weight: 500; color: #475569;'>📞 " + item.phone + "</td>";
+          htmlOutput += "    </tr>";
         }
-        htmlOutput += "</ul>";
+        
+        htmlOutput += "  </tbody>";
+        htmlOutput += "</table>";
       }
       
       htmlOutput += "</div></body></html>";
@@ -283,6 +406,165 @@ function doGet(e) {
       return HtmlService.createHtmlOutput("<h2>❌ Failed to build report: " + err.toString() + "</h2>");
     }
   }
+
+
+    // =================================================================
+  // ROUTER 5: FIXED HISTORICAL ABSENTEE AUDITOR WITH HTML TABLE OUTPUT
+  // =================================================================
+  // =================================================================
+  // ROUTER 5: HISTORICAL ABSENTEE AUDITOR (GROUPED BY GRADE & ALPHABETICAL)
+  // =================================================================
+  if (action === "getAbsenteesByDate") {
+    try {
+      var targetDateStr = e.parameter.dateStr; // Expected format: "YYYY-MM-DD"
+      if (!targetDateStr) {
+        return HtmlService.createHtmlOutput("<h2>❌ Error: No date provided</h2>");
+      }
+      
+      // Convert target date into "dd-MMM-yy" string (e.g., "29-Aug-26")
+      var targetDateObj = new Date(targetDateStr + "T00:00:00");
+      var targetFormatted = Utilities.formatDate(targetDateObj, ss.getSpreadsheetTimeZone(), "dd-MMM-yy");
+
+      var logSheet = ss.getSheetByName("Sheet1") || ss.getSheets();
+      var rosterSheet = ss.getSheetByName("StudentList");
+      
+      var presentStudentsMap = {};
+
+      // 1. Scan attendance logs to see who physically showed up
+      if (logSheet) {
+        var logLastRow = logSheet.getLastRow();
+        if (logLastRow >= 2) {
+          var logRows = logSheet.getRange(2, 1, logLastRow - 1, 2).getValues();
+          for (var i = 0; i < logRows.length; i++) {
+            var logTimestamp = logRows[i][0];
+            var logStudentName = logRows[i][1] ? logRows[i][1].toString().trim() : "";
+            
+            if (logTimestamp && logStudentName !== "") {
+              var logFormattedDate = Utilities.formatDate(new Date(logTimestamp), ss.getSpreadsheetTimeZone(), "dd-MMM-yy");
+              if (logFormattedDate === targetFormatted) {
+                presentStudentsMap[logStudentName.toLowerCase()] = true;
+              }
+            }
+          }
+        }
+      }
+
+      // Map object matrix to cleanly bucket students by grade natively
+      var groupedAbsentees = {}; 
+
+      // 2. Scan master roster to extract the profiles who are missing and bucket them by Grade
+      if (rosterSheet) {
+        var rosterLastRow = rosterSheet.getLastRow();
+        if (rosterLastRow >= 2) {
+          var rosterRows = rosterSheet.getRange(2, 1, rosterLastRow - 1, 4).getValues();
+          for (var j = 0; j < rosterRows.length; j++) {
+            var masterName = rosterRows[j][0] ? rosterRows[j][0].toString().trim() : "";
+            var gradeValue = rosterRows[j][1] ? rosterRows[j][1].toString().trim() : "Unassigned Grade";
+            var parentValue = rosterRows[j][2] ? rosterRows[j][2].toString().trim() : "--";
+            var phoneValue = rosterRows[j][3] ? rosterRows[j][3].toString().trim() : "--";
+            
+            if (masterName !== "") {
+              if (!presentStudentsMap[masterName.toLowerCase()]) {
+                // Initialize the bucket array profile if this grade hasn't been met yet
+                if (!groupedAbsentees[gradeValue]) {
+                  groupedAbsentees[gradeValue] = [];
+                }
+                
+                groupedAbsentees[gradeValue].push({
+                  name: masterName,
+                  parent: parentValue,
+                  phone: phoneValue
+                });
+              }
+            }
+          }
+        }
+      }
+
+      // Extract and sort Grade category group headers alphabetically or numerically
+      var sortedGrades = Object.keys(groupedAbsentees).sort();
+
+      // Alphabetically sort students internally within each individual grade section array bucket
+      for (var g = 0; g < sortedGrades.length; g++) {
+        groupedAbsentees[sortedGrades[g]].sort(function(a, b) {
+          var nameA = a.name.toLowerCase().trim();
+          var nameB = b.name.toLowerCase().trim();
+          return nameA.localeCompare(nameB, undefined, { sensitivity: 'base', numeric: true });
+        });
+      }
+
+      // 3. GENERATE THE DYNAMICALLY SECTIONED GROUP TABLE VIEW
+      var htmlOutput = "<html><head><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Grouped Absentee Audit</title>";
+      htmlOutput += "<style>";
+      htmlOutput += "body { font-family: system-ui, -apple-system, sans-serif; background-color: #f8fafc; color: #1e293b; padding: 2rem 1rem; margin: 0; }";
+      htmlOutput += ".card { width: 100%; max-width: 850px; margin: 0 auto; background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); overflow-x: auto; }";
+      htmlOutput += "h1 { font-size: 1.3rem; font-weight: 800; margin-bottom: 1.5rem; color: #ea580c; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #fed7aa; padding-bottom: 0.5rem; }";
+      htmlOutput += "table { width: 100%; border-collapse: collapse; white-space: nowrap; text-align: left; margin-bottom: 2rem; }";
+      htmlOutput += "th { font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.75rem 1rem; border-bottom: 2px solid #e2e8f0; }";
+      htmlOutput += "td { padding: 0.85rem 1rem; font-size: 0.95rem; border-bottom: 1px solid #f1f5f9; color: #334155; }";
+      htmlOutput += ".grade-section-header { background-color: #f1f5f9; color: #1e293b; font-weight: 800; font-size: 1rem; padding: 0.75rem 1rem; text-transform: uppercase; letter-spacing: 0.02em; border-left: 4px solid #ea580c; }";
+      htmlOutput += "tr:hover { background-color: #f8fafc; }";
+      htmlOutput += ".empty-state { text-align: center; color: #10b981; font-weight: 700; padding: 2rem 0; font-size: 1.1rem; }";
+      htmlOutput += "</style></head><body>";
+      htmlOutput += "<div class='card'>";
+      htmlOutput += "<h1>📋 Grouped Absentee Audit List for " + targetFormatted + "</h1>";
+      
+      if (sortedGrades.length === 0) {
+        htmlOutput += "<div class='empty-state'>🎉 All students were accounted for on this day!</div>";
+      } else {
+        htmlOutput += "<table>";
+        htmlOutput += "  <thead>";
+        htmlOutput += "    <tr>";
+        htmlOutput += "      <th style='width: 8%;'>#</th>";
+        htmlOutput += "      <th style='width: 47%;'>Student Name</th>";
+        htmlOutput += "      <th style='width: 25%;'>Parent / Guardian</th>";
+        htmlOutput += "      <th style='width: 20%;'>Phone Number</th>";
+        htmlOutput += "    </tr>";
+        htmlOutput += "  </thead>";
+        htmlOutput += "  <tbody>";
+        
+        // Loop through each distinct sorted grade level group category section
+        for (var m = 0; m < sortedGrades.length; m++) {
+          var currentGradeName = sortedGrades[m];
+          var studentsInGrade = groupedAbsentees[currentGradeName];
+          
+          // Print section category visual break separator header row
+          htmlOutput += "    <tr>";
+          htmlOutput += "      <td colspan='4' class='grade-section-header'>📂 " + currentGradeName + " (" + studentsInGrade.length + " Absent)</td>";
+          htmlOutput += "    </tr>";
+          
+          // Print student columns matching that localized sorted array collection row entries
+          for (var s = 0; s < studentsInGrade.length; s++) {
+            var studentObj = studentsInGrade[s];
+            htmlOutput += "    <tr>";
+            htmlOutput += "      <td style='font-weight: 700; color: #64748b; padding-left: 1.5rem;'>" + (s + 1) + "</td>";
+            htmlOutput += "      <td style='font-weight: 600; color: #1e293b;'>📍 " + studentObj.name + "</td>";
+            htmlOutput += "      <td>👪 " + studentObj.parent + "</td>";
+            htmlOutput += "      <td style='font-weight: 500; color: #475569;'>📞 " + studentObj.phone + "</td>";
+            htmlOutput += "    </tr>";
+          }
+        }
+        
+        htmlOutput += "  </tbody>";
+        htmlOutput += "</table>";
+      }
+      
+      htmlOutput += "</div></body></html>";
+      
+      return HtmlService.createHtmlOutput(htmlOutput)
+                        .setTitle("Grouped Absentee Audit")
+                        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+
+    } catch(err) {
+      return HtmlService.createHtmlOutput("<h2>❌ Failed to build report view: " + err.toString() + "</h2>");
+    }
+  }
+
+
+
+
+
+
   
   return HtmlService.createHtmlOutput("<h2>Backend API is active. Ready to accept student logs!</h2><p>To view the absentee listing directly from a browser, append <strong>?action=getAbsentees</strong> to the end of your address bar URL parameter link string.</p>");
 }
