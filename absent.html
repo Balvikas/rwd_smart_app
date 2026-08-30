@@ -4,9 +4,9 @@
     <script src="config.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Absentee Audit</title>
+    <title>Date History Audit</title>
     <style>
-        /* CSS RESET & ROOT BOUNDS */
+        /* INHERITED REFINED SIGNUP STYLE BASICS */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
             --primary: #ea580c;
@@ -20,121 +20,129 @@
         body { 
             background-color: var(--bg); 
             min-height: 100vh;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            color: var(--text-main); 
-            padding: 1rem 0.75rem;
-            -webkit-font-smoothing: antialiased;
+            font-family: system-ui, -apple-system, sans-serif;
+            color: var(--text-main);
+            padding: 1.5rem 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        .container { 
-            width: 100%; 
-            max-width: 650px; 
-            margin: 0 auto; 
-            background: white; 
-            border: 1px solid var(--border); 
-            border-radius: 16px; 
-            padding: 1.5rem; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.04); 
+        .container {
+            width: 100%;
+            max-width: 540px; /* Aligns to your signup.html card bounds */
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.08);
         }
         
-        /* PREMIUM BACK NAVIGATION ARROW */
         .btn-back-kiosk {
-            display: inline-flex; 
-            align-items: center; 
-            gap: 0.5rem; 
-            color: #475569;
-            text-decoration: none; 
-            font-weight: 700; 
-            font-size: 0.85rem; 
-            padding: 0.6rem 1rem;
-            border: 2px solid #cbd5e1; 
-            border-radius: 8px; 
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 0.5rem 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
             margin-bottom: 1.5rem;
-            transition: all 0.2s ease; 
-            background-color: #f1f5f9; 
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
+            transition: all 0.2s ease;
+            background: white;
         }
-        .btn-back-kiosk:hover { 
-            color: var(--primary); 
-            border-color: var(--primary); 
-            background-color: #fff7ed; 
+        .btn-back-kiosk:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+            background-color: #fff7ed;
         }
 
-        .header { text-align: center; margin-bottom: 1.5rem; border-bottom: 2px solid #fed7aa; padding-bottom: 1rem; }
-        .header h1 { font-size: 1.6rem; color: var(--primary-dark); font-weight: 800; letter-spacing: -0.02em; }
-        .header p { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.2rem; }
+        .header {
+            margin-bottom: 1.75rem;
+            border-bottom: 2px solid #fed7aa;
+            padding-bottom: 0.75rem;
+        }
+        .header h1 { font-size: 1.4rem; color: var(--primary); font-weight: 800; }
+        .header p { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.2rem; }
         
-        /* ⚠️ FIXED IPHONE LAYOUT: Strictly stacked vertically using block layout parameters to prevent any overlapping */
-        .search-box { 
-            display: block; 
+        /* ⚠️ FIXED RWD SEARCH BOX PACKAGING LAYER */
+        .search-box {
+            display: flex;
+            flex-direction: column; /* Forces vertical block layout on mobile screen viewports */
             width: 100%;
         }
-        .field-group { 
-            width: 100%; 
-            margin-bottom: 1.25rem; /* Forces clean, unmovable space below calendar box */
+        .field-group {
+            width: 100%;
+            margin-bottom: 1.25rem; /* Rigid space spacer that stops overlap crashes */
         }
-        .control-label { 
-            display: block; 
-            font-size: 0.8rem; 
-            font-weight: 700; 
-            color: var(--text-muted); 
-            margin-bottom: 0.5rem; 
-            text-transform: uppercase; 
-            letter-spacing: 0.05em; 
-        }
-        .input-calendar { 
-            width: 100%; 
-            padding: 0.9rem 1.2rem; 
-            font-size: 1.1rem; 
-            border-radius: 12px; 
-            border: 2px solid var(--border); 
-            background-color: var(--bg); 
-            color: var(--text-main); 
-            outline: none; 
-            transition: all 0.2s ease; 
+        .control-label {
             display: block;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
-        .input-calendar:focus { border-color: var(--primary); background-color: white; box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.08); }
-        
-        .btn-audit { 
-            display: flex; 
+        .input-calendar {
             width: 100%;
-            height: 52px; 
-            font-size: 1.05rem; 
-            font-weight: 700; 
-            border-radius: 12px; 
-            border: none; 
-            color: white; 
-            background-color: var(--primary); 
-            cursor: pointer; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 0.5rem; 
-            transition: transform 0.1s ease, filter 0.2s ease; 
-            box-shadow: 0 4px 12px rgba(234, 88, 12, 0.15);
+            padding: 1.1rem 1.2rem;
+            font-size: 1.15rem;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            background-color: var(--bg);
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.2s ease;
+            display: block;
+            -webkit-appearance: none; /* Smooth out iOS picker styling artifacts */
+        }
+        .input-calendar:focus {
+            border-color: var(--primary);
+            background-color: white;
+            box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.1);
+        }
+        
+        .btn-audit {
+            width: 100%;
+            padding: 1.1rem;
+            font-size: 1.15rem;
+            font-weight: 700;
+            border-radius: 12px;
+            border: none;
+            color: white;
+            background-color: var(--primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: transform 0.1s ease, filter 0.2s ease;
+            box-shadow: 0 6px 16px rgba(234, 88, 12, 0.15);
             -webkit-tap-highlight-color: transparent;
-            margin-top: 0.5rem;
         }
         .btn-audit:hover { filter: brightness(0.92); }
         .btn-audit:active { transform: scale(0.98); }
         
-        .status-alert { margin-top: 1rem; padding: 0.85rem; border-radius: 10px; text-align: center; font-weight: 700; font-size: 0.9rem; display: none; }
+        .status-alert { margin-top: 1rem; padding: 1rem; border-radius: 12px; text-align: center; font-weight: 700; font-size: 0.95rem; display: none; }
         .alert-danger { background-color: var(--danger); color: #991b1b; }
 
-        /* TABLET & LAPTOP EXPANSION BREAKPOINTS */
+        /* SCALES BACK SIDE-BY-SIDE ONLY ON ROOMY TABLETS/DESKTOPS */
         @media (min-width: 576px) {
-            body { padding: 2rem 1rem; }
-            .container { padding: 2.5rem; }
-            .header h1 { font-size: 1.8rem; }
-            .search-box { display: flex; align-items: flex-end; gap: 0.75rem; }
+            .search-box {
+                flex-direction: row;
+                align-items: flex-end;
+                gap: 0.75rem;
+            }
             .field-group { margin-bottom: 0; }
-            .btn-audit { width: auto; height: 52px; margin-top: 0; padding: 0 2rem; }
+            .btn-audit { width: auto; padding: 0 1.5rem; height: 55px; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <!-- RETURN TO KIOSK LINK HOOK -->
     <a href="index.html" class="btn-back-kiosk">
         <svg xmlns="http://w3.org" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -144,10 +152,11 @@
     </a>
 
     <div class="header">
-        <h1>📋 Date Wise Absentee Auditor</h1>
+        <h1>📅 Date History Audit</h1>
         <p>Cross-reference master rosters to find missing students by date</p>
     </div>
 
+    <!-- WRAPPER FORM INTERFACE -->
     <div class="search-box">
         <div class="field-group">
             <label for="auditDate" class="control-label">Select Audit Date</label>
@@ -157,7 +166,7 @@
             <svg xmlns="http://w3.org" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                 <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="8" y1="2" x2="8" x2="6"></line>
                 <line x1="3" y1="10" x2="18" y2="10"></line>
             </svg>
             Run Audit
