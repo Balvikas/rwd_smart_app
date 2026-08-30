@@ -116,7 +116,7 @@
                 </div>
                 <div class="form-grid">
                     <div class="field-group">
-                        <label for="group" class="control-label">group / Group</label>
+                        <label for="group" class="control-label">Grade / Group</label>
                         <input type="text" id="group" class="input-kiosk" placeholder="--" readonly>
                     </div>
                     <div class="field-group">
@@ -178,8 +178,8 @@
                 <input type="text" id="modalFullName" class="input-kiosk" autocomplete="off" placeholder="Exact name for Update/Delete" required>
             </div>
             <div class="field-group" style="margin-bottom: 0.75rem;">
-                <label for="modalgroup" class="control-label">group / Group</label>
-                <input type="text" id="modalgroup" class="input-kiosk" autocomplete="off" placeholder="e.g. Group 4, Pre-School">
+                <label for="modalGrade" class="control-label">Grade / Group</label>
+                <input type="text" id="modalGrade" class="input-kiosk" autocomplete="off" placeholder="e.g. Group 4, Pre-School">
             </div>
             <div class="field-group" style="margin-bottom: 0.75rem;">
                 <label for="modalParent" class="control-label">Parent / Guardian Name</label>
@@ -253,7 +253,7 @@ function fetchLiveStudentRoster() {
 
 /**
  * PHASE 2: INSTANT FIELD AUTOFILL FETCH (0-millisecond delay!)
- * Pulls group, Parent, and Phone numbers instantly from local variable memory
+ * Pulls Grade, Parent, and Phone numbers instantly from local variable memory
  */
 function autofillStudentData() {
     const dropdown = document.getElementById("studentDropdown");
@@ -272,7 +272,7 @@ function autofillStudentData() {
     const studentDetails = dynamicStudentDatabase[selectedValue];
 
     if (studentDetails) {
-        document.getElementById("group").value = studentDetails.group || "--";
+        document.getElementById("group").value = studentDetails.grade || "--";
         document.getElementById("parentName").value = studentDetails.parent || "--";
         document.getElementById("parentPhone").value = studentDetails.phone || "--";
     } else {
@@ -304,7 +304,7 @@ function getPendingCheckOut() { window.open(`${GOOGLE_SCRIPT_URL}?action=getPend
 
 function executeDatabaseAction(dbMethod) {
     const nameField = document.getElementById("modalFullName").value.trim();
-    const groupField = document.getElementById("modalgroup").value.trim();
+    const gradeField = document.getElementById("modalGrade").value.trim();
     const parentField = document.getElementById("modalParent").value.trim();
     const phoneField = document.getElementById("modalPhone").value.trim();
     const alertBox = document.getElementById("modalStatusAlert");
@@ -314,13 +314,13 @@ function executeDatabaseAction(dbMethod) {
         alertBox.className = "status-alert alert-danger"; alertBox.textContent = "❌ Student Full Name is required.";
         document.getElementById("modalFullName").focus(); return;
     }
-    if (dbMethod === "INSERT" && (!groupField || !parentField || !phoneField)) {
+    if (dbMethod === "INSERT" && (!gradeField || !parentField || !phoneField)) {
         alertBox.className = "status-alert alert-danger"; alertBox.textContent = "❌ Please fill out all fields to Insert.";
         return;
     }
     alertBox.className = "status-alert alert-loading"; alertBox.textContent = `⏳ Requesting DB ${dbMethod} Operation...`;
 
-    const payload = { action: "manageStudent", method: dbMethod, fullName: nameField, group: groupField, parent: parentField, phone: phoneField };
+    const payload = { action: "manageStudent", method: dbMethod, fullName: nameField, grade: gradeField, parent: parentField, phone: phoneField };
 
     fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", cache: "no-cache", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(payload) })
     .then(() => {
