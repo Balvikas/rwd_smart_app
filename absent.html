@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="config.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historical Absentee Auditor</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --primary: #ea580c;
+            --primary-dark: #9a3412;
+            --bg: #f8fafc;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --danger: #ef4444;
+        }
+        body { 
+            background-color: var(--bg); min-height: 100vh;
+            font-family: system-ui, -apple-system, sans-serif; color: var(--text-main); padding: 2rem 1rem;
+        }
+        .container { width: 100%; max-width: 650px; margin: 0 auto; background: white; border: 1px solid var(--border); border-radius: 16px; padding: 2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .header { text-align: center; margin-bottom: 1.5rem; border-bottom: 2px solid #fed7aa; padding-bottom: 1rem; }
+        .header h1 { font-size: 1.6rem; color: var(--primary-dark); font-weight: 800; }
+        .header p { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.2rem; }
+        
+        .search-box { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; align-items: flex-end; }
+        .field-group { flex-grow: 1; }
+        .control-label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .input-calendar { width: 100%; padding: 0.75rem 1rem; font-size: 1rem; border-radius: 10px; border: 2px solid var(--border); background-color: var(--bg); outline: none; }
+        .input-calendar:focus { border-color: var(--primary); background-color: white; }
+        
+        .btn-audit { padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 700; border-radius: 10px; border: none; color: white; background-color: var(--primary); cursor: pointer; transition: filter 0.2s ease; height: 46px; }
+        .btn-audit:hover { filter: brightness(0.9); }
+        
+        .absent-count { font-weight: 800; font-size: 1rem; margin-bottom: 1rem; color: var(--text-main); display: none; }
+        .roster-list { display: flex; flex-direction: column; gap: 0.75rem; }
+        .student-card { padding: 1rem; border: 1px solid var(--border); border-radius: 12px; background-color: #ffffff; display: flex; flex-direction: column; gap: 0.25rem; box-shadow: 0 2px 4px rgba(0,0,0,0.01); }
+        .student-name { font-size: 1.05rem; font-weight: 700; color: var(--text-main); }
+        .student-meta { font-size: 0.85rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 0.75rem; }
+        
+        .status-alert { margin-top: 1rem; padding: 1rem; border-radius: 10px; text-align: center; font-weight: 700; display: none; }
+        .alert-loading { background-color: #fef3c7; color: #92400e; }
+        .alert-danger { background-color: #fee2e2; color: #991b1b; }
+        .empty-state { text-align: center; color: #10b981; font-weight: 700; padding: 2rem 0; font-size: 1.1rem; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>📋 Historical Absentee Auditor</h1>
+        <p>Select a date to audit missing student profile configurations</p>
+    </div>
+
+    <div class="search-box">
+        <div class="field-group">
+            <label for="auditDate" class="control-label">Select Audit Date</label>
+            <input type="date" id="auditDate" class="input-calendar">
+        </div>
+        <button type="button" class="btn-audit" onclick="runAbsenteeAudit()">🔍 Run Audit</button>
+    </div>
+
+    <div id="statusAlert" class="status-alert"></div>
+    <div id="absentCountDisplay" class="absent-count"></div>
+    <div id="emptyState" class="empty-state">🎉 All students were present on this day!</div>
+    
+    <div id="resultsContainer" class="roster-list"></div>
+</div>
+
+<script>
+    const GOOGLE_SCRIPT_URL = GLOBAL_CONFIG.GOOGLE_SCRIPT_URL;
+
+    // Set default value of calendar selector to today's date automatically on load
+    window.addEventListener("DOMContentLoaded", () => {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById("auditDate").value = today;
+    });
+
+    function runAbsenteeAudit() {
+        const dateInput = document.getElementById("auditDate").value;
+        const alertBox = document.getElementById("statusAlert");
+        const countBox = document.getElementById("absentCountDisplay");
+        const emptyBox = document.getElementById("emptyState");
+        const resultsContainer = document.getElementById("resultsContainer");
+
+        // Clear view space before running lookup
+        alertBox.style.display = "none";
+        countBox.style.display = "none";
+        emptyBox.style.display = "none";
+        resultsContainer.innerHTML = "";
+
+        if (!dateInput) {
+            alertBox.className = "status-alert alert-danger";
+            alertBox.style.display = "block";
+            alertBox.textContent = "❌ Please pick a date using the calendar window.";
+            return;
+        }
+
+        alertBox.className = "status-alert alert-loading";
+        alertBox.style.display = "block";
+        alertBox.textContent = "⏳ Cross-referencing roster with active date logs...";
+
+        // Execute GET request targeting your newly deployed calendar tracking parameter route
+        fetch(`${GOOGLE_SCRIPT_URL}?action=getAbsenteesByDate&dateStr=${dateInput}`)
+            .then(response => response.json())
+            .then(absentProfiles => {
+                alertBox.style.display = "none";
+
+                if (absentProfiles.error) {
+                    alertBox.className = "status-alert alert-danger";
+                    alertBox.style.display = "block";
+                    alertBox.textContent = `❌ Server Error: ${absentProfiles.error}`;
+                    return;
+                }
+
+                if (absentProfiles.length === 0) {
+                    emptyBox.style.display = "block";
+                    return;
+                }
+
+                // Render dynamic text counter dashboard elements
+                countBox.style.display = "block";
+                countBox.textContent = `⚠️ Total Absent Students: ${absentProfiles.length}`;
+
+                // Append each absent student card cleanly into our display list container layout
+                absentProfiles.forEach(student => {
+                    const card = document.createElement("div");
+                    card.className = "student-card";
+                    
+                    card.innerHTML = `
+                        <div class="student-name">📍 ${student.name}</div>
+                        <div class="student-meta">
+                            <span><strong>Group:</strong> ${student.grade}</span>
+                            <span>•</span>
+                            <span><strong>Parent:</strong> ${student.parent}</span>
+                            <span>•</span>
+                            <span><strong>Phone:</strong> ${student.phone}</span>
+                        </div>
+                    `;
+                    resultsContainer.appendChild(card);
+                });
+            })
+            .catch(error => {
+                alertBox.className = "status-alert alert-danger";
+                alertBox.style.display = "block";
+                alertBox.textContent = "❌ Failed to link with spreadsheet. Check your internet connection.";
+                console.error(error);
+            });
+    }
+</script>
+</body>
+</html>
