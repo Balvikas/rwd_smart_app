@@ -1,0 +1,288 @@
+function doPost(e) {
+  try {
+    var rawText = e.postData.contents;
+    var data = JSON.parse(rawText);
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    
+    // =================================================================
+    // PATHWAY A: STUDENT REGISTRATION MANAGEMENT (Insert/Update/Delete)
+    // =================================================================
+    if (data.action === "manageStudent") {
+      var sheet = ss.getSheetByName("StudentList");
+      if (!sheet) {
+        return ContentService.createTextOutput(JSON.stringify({"status": "error", "message": "StudentList tab not found"}))
+                             .setMimeType(ContentService.MimeType.JSON);
+      }
+      
+      var lastRow = sheet.getLastRow();
+      var targetName = data.fullName.toString().toLowerCase().trim();
+      var nameFoundRow = -1;
+      
+      // Look up if student name already exists in column A
+      if (lastRow >= 2) {
+        var namesRange = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+        for (var i = 0; i < namesRange.length; i++) {
+          if (namesRange[i].toString().toLowerCase().trim() === targetName) {
+            nameFoundRow = i + 2; // Offset by 2 due to 0-indexing + header row
+            break;
+          }
+        }
+      }
+      
+      // Method A: INSERT
+      if (data.method === "INSERT") {
+        sheet.appendRow([data.fullName, data.grade, data.parent, data.phone.toString()]);
+        return ContentService.createTextOutput(JSON.stringify({"status": "success", "info": "Inserted"}))
+                             .setMimeType(ContentService.MimeType.JSON);
+                             
+      // Method B: UPDATE
+      } else if (data.method === "UPDATE") {
+        if (nameFoundRow === -1) {
+          return ContentService.createTextOutput(JSON.stringify({"status": "error", "message": "Student profile not found to update"}))
+                               .setMimeType(ContentService.MimeType.JSON);
+        }
+        if (data.grade)  sheet.getRange(nameFoundRow, 2).setValue(data.grade);
+        if (data.parent) sheet.getRange(nameFoundRow, 3).setValue(data.parent);
+        if (data.phone)  sheet.getRange(nameFoundRow, 4).setValue(data.phone.toString());
+        return ContentService.createTextOutput(JSON.stringify({"status": "success", "info": "Updated"}))
+                             .setMimeType(ContentService.MimeType.JSON);
+                             
+      // Method C: DELETE
+      } else if (data.method === "DELETE") {
+        if (nameFoundRow === -1) {
+          return ContentService.createTextOutput(JSON.stringify({"status": "error", "message": "Student profile not found to delete"}))
+                               .setMimeType(ContentService.MimeType.JSON);
+        }
+        sheet.deleteRow(nameFoundRow);
+        return ContentService.createTextOutput(JSON.stringify({"status": "success", "info": "Deleted"}))
+                             .setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+    
+    // =================================================================
+    // ORIGINAL PATHWAY: YOUR EXACT UNCHANGED ATTENDANCE KIOSK LOGS
+    // =================================================================
+    var logSheet = ss.getSheetByName("Sheet1") || ss.getSheets()[0]; 
+    
+    var studentName = data.student || data.studentName || ""; 
+    var group = data.group || "";
+    var parentName = data.parentName || "";
+    var incomingPhone = data.parentPhone || "";
+    var finalStatus = data.status || ""; 
+    var pincode = data.pincode || data.Pincode || "";
+
+    // Append columns cleanly straight into your tracker sheets logs layout grid rows
+    logSheet.appendRow([
+      new Date(),
+      studentName,
+      group,
+      parentName,
+      incomingPhone, 
+      finalStatus, 
+      pincode.toString() 
+    ]);
+
+    return ContentService.createTextOutput(JSON.stringify({"status": "success"}))
+                         .setMimeType(ContentService.MimeType.JSON);
+
+  } catch(error) {
+    return ContentService.createTextOutput(JSON.stringify({"status": "error", "message": error.toString()}))
+                         .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+function doGet(e) {
+  var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : "";
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  // =================================================================
+  // ROUTER 1: OPTIMIZED NAMES LIST + DETAILS CACHE FETCH
+  // =================================================================
+  if (action === "getStudents") {
+    try {
+      var sheet = ss.getSheetByName("StudentList");
+      var cacheData = {};
+      if (sheet) {
+        var lastRow = sheet.getLastRow();
+        if (lastRow >= 2) {
+          // Read all 4 columns at once: Full Name (1), GRADE (2), Parent (3), Phone Number (4)
+          var values = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
+          for (var i = 0; i < values.length; i++) {
+            var rowName = values[i][0].toString().trim();
+            if (rowName !== "") { 
+              // Store all corresponding details mapped under the student's name
+              cacheData[rowName] = {
+                grade: values[i][1].toString().trim(),
+                parent: values[i][2].toString().trim(),
+                phone: values[i][3].toString().trim()
+              };
+            }
+          }
+        }
+      }
+      // Return the complete details dictionary object back to your kiosk
+      return ContentService.createTextOutput(JSON.stringify(cacheData))
+                           .setMimeType(ContentService.MimeType.JSON);
+    } catch(err) {
+      return ContentService.createTextOutput(JSON.stringify({"Error": err.toString()}))
+                           .setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
+
+  // =================================================================
+  // ROUTE 2: FETCH INDIVIDUAL STUDENT DETAILS (Autofills Fields)
+  // =================================================================
+  if (action === "getStudentDetails") {
+    try {
+      var sheet = ss.getSheetByName("StudentList");
+      var targetName = e.parameter.fullName ? e.parameter.fullName.toLowerCase().trim() : "";
+      
+      if (sheet) {
+        var lastRow = sheet.getLastRow();
+        if (lastRow >= 2) {
+          var rowsData = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
+          for (var i = 0; i < rowsData.length; i++) {
+            if (rowsData[i][0].toString().toLowerCase().trim() === targetName) {
+              var result = {
+                grade: rowsData[i][1].toString(), 
+                parent: rowsData[i][2].toString(),
+                phone: rowsData[i][3].toString()
+              };
+              return ContentService.createTextOutput(JSON.stringify(result))
+                                   .setMimeType(ContentService.MimeType.JSON);
+            }
+          }
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({"error": "Student profile not found"}))
+                           .setMimeType(ContentService.MimeType.JSON);
+    } catch(err) {
+      return ContentService.createTextOutput(JSON.stringify({"error": err.toString()}))
+                           .setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  
+  // =================================================================
+  // NEW ROUTE 3: PENDING CHECK-OUT ROSTER DASHBOARD
+  // =================================================================
+  if (action === "getPendingCheckOut") {
+    try {
+      var logSheet = ss.getSheetByName("Sheet1") || ss.getSheets()[0]; 
+      var lastRow = logSheet.getLastRow();
+      var latestStatusMap = {};
+
+      if (lastRow >= 2) {
+        var logsData = logSheet.getRange(2, 1, lastRow - 1, 6).getValues();
+        for (var i = 0; i < logsData.length; i++) {
+          var timestamp = logsData[i][0];
+          var student = logsData[i][1].toString().trim();
+          var group = logsData[i][2].toString().trim();
+          var parent = logsData[i][3].toString().trim();
+          var phone = logsData[i][4].toString().trim();
+          var currentStatus = logsData[i][5].toString().trim();
+
+          if (student !== "") {
+            latestStatusMap[student] = {
+              timestamp: Utilities.formatDate(new Date(timestamp), ss.getSpreadsheetTimeZone(), "h:mm a"),
+              group: group,
+              parent: parent,
+              phone: phone,
+              status: currentStatus
+            };
+          }
+        }
+      }
+
+      var htmlOutput = "<html><head><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Pending Check-Out Roster</title>";
+      htmlOutput += "<style>";
+      htmlOutput += "body { font-family: system-ui, -apple-system, sans-serif; background-color: #f8fafc; color: #1e293b; padding: 2rem 1rem; margin: 0; }";
+      htmlOutput += ".card { width: 100%; max-width: 600px; margin: 0 auto; background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }";
+      htmlOutput += "h1 { font-size: 1.4rem; font-weight: 800; margin-bottom: 1.5rem; color: #ea580c; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #fed7aa; padding-bottom: 0.5rem; }";
+      htmlOutput += ".student-row { padding: 1rem 0.5rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }";
+      htmlOutput += ".details { font-size: 0.85rem; color: #64748b; margin-top: 0.2rem; }";
+      htmlOutput += ".time-badge { background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; padding: 0.3rem 0.6rem; border-radius: 20px; font-weight: 700; font-size: 0.8rem; }";
+      htmlOutput += ".empty-state { text-align: center; color: #10b981; font-weight: 700; padding: 2rem 0; font-size: 1.1rem; }";
+      htmlOutput += "</style></head><body><div class='card'><h1>🚪 Pending Check-Out Roster</h1>";
+
+      var hasActiveStudents = false;
+      var sortedStudents = Object.keys(latestStatusMap).sort();
+
+      for (var k = 0; k < sortedStudents.length; k++) {
+        var studentKey = sortedStudents[k];
+        if (latestStatusMap[studentKey].status === "Check-in") {
+          hasActiveStudents = true;
+          htmlOutput += "<div class='student-row'><div><strong>" + studentKey + "</strong> (" + latestStatusMap[studentKey].group + ")";
+          htmlOutput += "<div class='details'>👪 " + latestStatusMap[studentKey].parent + " • 📞 " + latestStatusMap[studentKey].phone + "</div></div>";
+          htmlOutput += "<div class='time-badge'>In: " + latestStatusMap[studentKey].timestamp + "</div></div>";
+        }
+      }
+
+      if (!hasActiveStudents) {
+        htmlOutput += "<div class='empty-state'>🎉 All students have checked out safely!</div>";
+      }
+
+      htmlOutput += "</div></body></html>";
+      return HtmlService.createHtmlOutput(htmlOutput).setTitle("Pending Check-Out Roster").setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    } catch(err) {
+      return HtmlService.createHtmlOutput("<h2>❌ Error building view: " + err.toString() + "</h2>");
+    }
+  }
+
+  // =================================================================
+  // ORIGINAL PATHWAY: YOUR EXACT UNCHANGED ABSENTEE REPORT PAGE
+  // =================================================================
+  if (action === "getAbsentees") {
+    try {
+      var sheet = ss.getSheetByName("AbsentList");
+      var absenteesList = [];
+      
+      if (sheet) {
+        var lastRow = sheet.getLastRow();
+        if (lastRow >= 2) {
+          var range = sheet.getRange(2, 1, lastRow - 1, 1);
+          var values = range.getValues();
+          for (var i = 0; i < values.length; i++) {
+            var rowValue = values[i].toString().trim();
+            if (rowValue !== "") {
+              absenteesList.push(rowValue);
+            }
+          }
+        }
+      }
+
+      var htmlOutput = "<html><head><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Today's Absentees</title>";
+      htmlOutput += "<style>";
+      htmlOutput += "body { font-family: system-ui, -apple-system, sans-serif; background-color: #f8fafc; color: #1e293b; padding: 2rem 1rem; margin: 0; }";
+      htmlOutput += ".card { width: 100%; max-width: 500px; margin: 0 auto; background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }";
+      htmlOutput += "h1 { font-size: 1.4rem; font-weight: 800; margin-bottom: 1.5rem; color: #ea580c; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #fed7aa; padding-bottom: 0.5rem; }";
+      htmlOutput += "ul { list-style: none; padding: 0; margin: 0; }";
+      htmlOutput += "li { padding: 1rem 0.5rem; font-weight: 600; color: #475569; border-bottom: 1px solid #f1f5f9; }";
+      htmlOutput += "li:last-child { border-bottom: none; }";
+      htmlOutput += ".empty-state { text-align: center; color: #64748b; font-style: italic; padding: 2rem 0; font-size: 1.1rem; }";
+      htmlOutput += "</style></head><body>";
+      htmlOutput += "<div class='card'>";
+      htmlOutput += "<h1>📋 Today's Absentee List</h1>";
+      
+      if (absenteesList.length === 0) {
+        htmlOutput += "<div class='empty-state'>🎉 All students are accounted for today!</div>";
+      } else {
+        htmlOutput += "<ul>";
+        for (var j = 0; j < absenteesList.length; j++) {
+          htmlOutput += "<li>" + (j + 1) + ". " + absenteesList[j] + "</li>";
+        }
+        htmlOutput += "</ul>";
+      }
+      
+      htmlOutput += "</div></body></html>";
+      
+      return HtmlService.createHtmlOutput(htmlOutput)
+        .setTitle("Today's Absentees")
+        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+        
+    } catch(err) {
+      return HtmlService.createHtmlOutput("<h2>❌ Failed to build report: " + err.toString() + "</h2>");
+    }
+  }
+  
+  return HtmlService.createHtmlOutput("<h2>Backend API is active. Ready to accept student logs!</h2><p>To view the absentee listing directly from a browser, append <strong>?action=getAbsentees</strong> to the end of your address bar URL parameter link string.</p>");
+}
