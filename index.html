@@ -181,52 +181,84 @@
 
 
 	<script>
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxEUKcCG-Uzhsmxl8izt1XDcl-sNFrIPbQsqvKLyoZU96ZTuokmszcNE5JagLKQA4zw/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzlU33QiVYlvRh9Y1WnWNOr3x14_hqy5ueJATJkQC6SMj1KXS1xtQ1m4on7xbiMvlSn/exec";
 
+// 1. ADD THIS GLOBAL VARIABLE CONTAINER (Put it at the very top of your script block)
+let dynamicStudentDatabase = {};
+
+/**
+ * PHASE 1: DYNAMIC DROPDOWN POPULATION (Optimized with local memory caching)
+ * Fires instantly on page load to pull names and details from "StudentList" all at once
+ */
 function fetchLiveStudentRoster() {
     const dropdown = document.getElementById("studentDropdown");
+    
+    if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("YOUR_DEPLOYED")) {
+        dropdown.innerHTML = '<option value="">❌ Configuration Error: Script URL not set</option>';
+        return;
+    }
+
+    // Queries your sheet backend to pull down the combined name + details object
     fetch(`${GOOGLE_SCRIPT_URL}?action=getStudents`)
         .then(response => response.json())
-        .then(namesArray => {
+        .then(cachedMasterObject => {
+            // Save the complete spreadsheet data securely into your browser's local variable cache
+            dynamicStudentDatabase = cachedMasterObject;
+            
             dropdown.innerHTML = '<option value="">-- Tap to Choose Student --</option>';
-            if (!namesArray || namesArray.length === 0) {
+
+            // Alphabetically sort the names object keys locally on your device
+            const sortedNames = Object.keys(cachedMasterObject).sort((a, b) => 
+                a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true })
+            );
+
+            if (sortedNames.length === 0) {
                 dropdown.innerHTML = '<option value="">⚠️ StudentList tab is empty in Sheet</option>';
                 return;
             }
-            namesArray.forEach(name => {
+
+            sortedNames.forEach(name => {
                 const option = document.createElement("option");
-                option.value = name; option.textContent = name;
+                option.value = name;
+                option.textContent = name;
                 dropdown.appendChild(option);
             });
         })
-        .catch(() => { dropdown.innerHTML = '<option value="">❌ Error syncing roster. Refresh page.</option>'; });
+        .catch(error => {
+            console.error("Dynamic dropdown synchronization failure:", error);
+            dropdown.innerHTML = '<option value="">❌ Error syncing name list. Refresh page.</option>';
+        });
 }
 
+/**
+ * PHASE 2: INSTANT FIELD AUTOFILL FETCH (0-millisecond delay!)
+ * Pulls Grade, Parent, and Phone numbers instantly from local variable memory
+ */
 function autofillStudentData() {
     const dropdown = document.getElementById("studentDropdown");
     const selectedValue = dropdown.value;
+    
     dropdown.classList.remove("invalid-pulse");
+
     if (!selectedValue) {
         document.getElementById("group").value = "";
         document.getElementById("parentName").value = "";
         document.getElementById("parentPhone").value = "";
         return;
     }
-    document.getElementById("group").value = "⏳ Loading...";
-    document.getElementById("parentName").value = "⏳ Loading...";
-    document.getElementById("parentPhone").value = "⏳ Loading...";
 
-    fetch(`${GOOGLE_SCRIPT_URL}?action=getStudentDetails&fullName=${encodeURIComponent(selectedValue)}`)
-        .then(response => response.json())
-        .then(studentDetails => {
-            if (studentDetails && !studentDetails.error) {
-                document.getElementById("group").value = studentDetails.grade || "--";
-                document.getElementById("parentName").value = studentDetails.parent || "--";
-                document.getElementById("parentPhone").value = studentDetails.phone || "--";
-            } else { clearAutofillInputsOnError(); }
-        })
-        .catch(() => { clearAutofillInputsOnError(); });
+    // LOOKS UP THE DATA INSTANTLY LOCALLY — Zero network loading delays!
+    const studentDetails = dynamicStudentDatabase[selectedValue];
+
+    if (studentDetails) {
+        document.getElementById("group").value = studentDetails.grade || "--";
+        document.getElementById("parentName").value = studentDetails.parent || "--";
+        document.getElementById("parentPhone").value = studentDetails.phone || "--";
+    } else {
+        clearAutofillInputsOnError();
+    }
 }
+
 
 function clearAutofillInputsOnError() {
     document.getElementById("group").value = "--";
