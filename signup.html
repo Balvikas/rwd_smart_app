@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    	<!-- Include your single global config manager file -->
+    <script src="config.js"></script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bal Vikas Student Registration</title>
@@ -159,7 +162,8 @@
 </div>
 
 <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQGtahzr7rTeIW5co1fpwJmgvY_WzAecg9CUF25ikvcJGwmqg_r2-1GygZtRoUDtD8/exec";
+    //const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQGtahzr7rTeIW5co1fpwJmgvY_WzAecg9CUF25ikvcJGwmqg_r2-1GygZtRoUDtD8/exec";
+    const GOOGLE_SCRIPT_URL = GLOBAL_CONFIG.GOOGLE_SCRIPT_URL;
 
     function executeDatabaseAction(dbMethod) {
         const nameField = document.getElementById("fullName").value.trim();
